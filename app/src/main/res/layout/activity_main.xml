@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <com.example.myapplication.Game
+    <com.example.myapplication.Game1
         android:id="@+id/view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

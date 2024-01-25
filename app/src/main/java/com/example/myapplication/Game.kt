@@ -1,6 +1,7 @@
 package com.example.myapplication
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -28,6 +29,6 @@ open class Game : View {
         super.onDraw(canvas)
         paint.color = Color.BLACK
         paint.textSize = scrh / 16f
-        canvas?.drawText("test", 0f, scrh / 16f, paint)
+        canvas?.drawText("너비:$scrw 높이:$scrh", 0f, scrh / 16f, paint)
     }
 }

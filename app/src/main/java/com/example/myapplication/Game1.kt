@@ -1,19 +1,12 @@
 package com.example.myapplication
 
-import android.content.ContentValues
 import android.content.Context
-import android.database.Cursor
-import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteOpenHelper
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.media.MediaPlayer
-import android.provider.BaseColumns
 import android.util.AttributeSet
-import android.view.MotionEvent
 import android.view.View
 import kotlin.random.Random
 
@@ -54,13 +47,11 @@ open class Game1(con: Context?, at: AttributeSet?) : View(con, at) {
 
     var dbHelper = FeedReaderDbHelper(getContext())*/
 
-    //스크린 폭, 높이 정보를 저장할 정수형 변수
-    var scrw = 0
-    var scrh = 0
+    var scrw = 0    //스크린 너비값을 저장할 변수
+    var scrh = 0    //스크린 높이값을 저장할 변수
 
-    //캐릭터 이미지 기준점의 x좌표와 y좌표 위치 값을 저장할 실수형 변수
-    var xd = -100f
-    var yd = -80f
+    var xd = -100f  //캐릭터 이미지 기준점 x좌표 저장할 변수 (*게임 시작 시 중앙에 배치하기 위해 임의로 -100f값 넣음)
+    var yd = -80f   //캐릭터 이미지 기준점 y좌표 저장할 변수 (*게임 시작 시 중앙에 배치하기 위해 임의로 -80f값 넣음)
 
     //적군의 x좌표 값을 저장할 실수형 변수
     var rxd = FloatArray(3)
@@ -85,7 +76,7 @@ open class Game1(con: Context?, at: AttributeSet?) : View(con, at) {
     var save = 0
     var savecount = 1
 
-    //캐릭터 방향키 버튼 클릭 유무 (false(=0) 또는 true(=1) 유무로 판단한다.)
+    //캐릭터 방향키 버튼 클릭 유무 (false(=0)(*안 누름) 또는 true(=1)(*누름))
     var start = false
 
     //캐릭터가 정지 상태에 있는 동안 어떤 방향키를 클릭했는지 저장할 문자열 변수
@@ -113,30 +104,31 @@ open class Game1(con: Context?, at: AttributeSet?) : View(con, at) {
     var MD = 4
 
     //랜덤 변수
-    //var random: Random = Random()
+    var random = Random
 
     //위에서 10은 화면에 최대 10개까지의 미사일을 표시할 것을 의미합니다.
+
     //화면의 폭을 왼쪽과 오른쪽 부분 중 어느 곳을 클릭했는지 판별하는데 사용할 정수형 변수
     var n = 0
 
     //p라는 이름의 페인트 변수 설정
     var p: Paint = Paint()
 
-    /*//T라는 이름의 게임 쓰레드를 설정.
-    private var T: GameThread? = null*/
+    //T라는 이름의 게임 쓰레드를 설정.
+    private var T: GameThread? = null
 
-    //미디어 플레이어를 사용하기위한 변수 설정.
+    //배경음 재생을 위해 MediaPlayer 사용
     var bgBGM: MediaPlayer
 
     //Game이란 이름의 생성자 생성 -> Context는 앱에 대한 다양한 정보가 들어 있다. AttributeSet은 xml정보를 가져온다.
     init {
         //부모 클래스의 생성자를 불러와서 초기화시킨다.
 
-        //미디어 플레이어에서 사용할 파일 경로 연결.
+        //사용할 파일 경로 연결
         bgBGM = MediaPlayer.create(con, R.raw.background_bgm)
-        //timeloop파일 재생
+        //background_bgm파일 재생
         bgBGM.start()
-        //timeloop파일 무한재생
+        //background_bgm파일 무한재생
         bgBGM.setLooping(true)
     }
 
@@ -156,18 +148,18 @@ open class Game1(con: Context?, at: AttributeSet?) : View(con, at) {
         }*/
 
         //쓰레드 값이 비었다면
-        /*if (T == null) {
+        if (T == null) {
             //GameThread()함수를 돌린 값을 넣어줌
             T = GameThread()
             //쓰레드 시작
             T!!.start()
-        }*/
+        }
     }
 
     // 뷰가 윈도우에서 분리될 때마다 발생.
     protected override fun onDetachedFromWindow() {
-        /*//쓰레드의 run 값으로 false 값을 줌.
-        T!!.run = false*/
+        //쓰레드의 run 값으로 false 값을 줌.
+        T!!.run = false
         //부모 클래스의 멤버 변수를 참조
         super.onDetachedFromWindow()
     }
@@ -222,8 +214,9 @@ open class Game1(con: Context?, at: AttributeSet?) : View(con, at) {
             db.close()
         }*/
 
-        //main에 12개까지의 비트맵 정보를 저장함
-        val main: Array<Bitmap?> = arrayOfNulls<Bitmap>(4)
+        //player에 4개의 비트맵 정보를 저장함
+        val player: Array<Bitmap?> = arrayOfNulls<Bitmap>(4)
+
         /*//missile에 10개가지의 비트맵 정보를 저장함
         val missile: Array<Bitmap?> = arrayOfNulls<Bitmap>(10)*/
 
@@ -289,13 +282,13 @@ open class Game1(con: Context?, at: AttributeSet?) : View(con, at) {
             }
         }*/
 
-        //i는 0부터 12보다 작은 동안 1씩 증가하면서 반복문을 처리함
+        //캐릭터 이미지 4개를 배열에 넣기 위해 4번 반복하는 for문 작성
         for (i in 0..3) {
             //캐릭터 그림 파일의 경로를 배열에 저장해줌.
-            main[i] = BitmapFactory.decodeResource(getResources(), R.drawable.player01 + i)
+            player[i] = BitmapFactory.decodeResource(getResources(), R.drawable.player01 + i)
 
             //캐릭터 그림 파일의 크기를 설정해줌. 폭은 (scrw-scrw를 64로 나눈 값의 나머지) 나누기 8, 높이는 (scrh-scrh을 32로 나눈 값의 나머지) 나누기 4
-            main[i] = main[i]?.let {
+            player[i] = player[i]?.let {
                 Bitmap.createScaledBitmap(
                     it,
                     (scrw - scrw % 64) / 8,
@@ -307,7 +300,7 @@ open class Game1(con: Context?, at: AttributeSet?) : View(con, at) {
             //i와 n의 값이 같다면
             if (i == n) {
                 // 캐릭터 그림파일을 scrw/2+xd, scrh/2+yd 지점을 기준으로 그려줌.
-                main[i]?.let {
+                player[i]?.let {
                     canvas.drawBitmap(
                         it,
                         scrw.toFloat() / 2 + xd,
@@ -453,226 +446,226 @@ open class Game1(con: Context?, at: AttributeSet?) : View(con, at) {
         return true
     }*/
 
-        /*//게임 쓰레드 클래스에 쓰레드 확장
-    internal inner class GameThread : Thread() {
-        //run은 0 또는 1의 값을 가질 수 있으며, true 값을 넣어줌. (true = 1, false = 0)
-        var run = true
+        //게임 쓰레드 클래스에 쓰레드 확장
+        class GameThread : Thread() {
+            //run은 0 또는 1의 값을 가질 수 있으며, true 값을 넣어줌. (true = 1, false = 0)
+            var run = true
 
-        //run 함수를 만들어줌
-        override fun run() {
-            //run의 값이 1인 동안
-            while (run) {
-                try {
-                    //뷰에서 이미지를 분리시킨다.
-                    postInvalidate()
-                    //카운트가 8이라면
-                    if (count == 8) {
-                        //카운트는 0
-                        count = 0
-                        //방향키 정보를 저장한다.
-                        DirButton = DirButton2
-                    }
-                    //i는 0부터 3보다 작은 동안 i는 1씩 증가
-                    for (i in 0..2) {
-                        //i번째 count2가 8이라면
-                        if (count2[i] == 8) {
-                            //i번째 count2는 0
-                            count2[i] = 0
+            //run 함수를 만들어줌
+            override fun run() {
+                //run의 값이 1인 동안
+                while (run) {
+                    try {
+                        //뷰에서 이미지를 분리시킨다.
+                        postInvalidate()
+                        //카운트가 8이라면
+                        if (count == 8) {
+                            //카운트는 0
+                            count = 0
+                            //방향키 정보를 저장한다.
+                            DirButton = DirButton2
                         }
-                        //i번째 count2가 0이라면
-                        if (count2[i] == 0) {
-                            //정수형 변수r은 1~4 사이의 정수 값을 가진다.
-                            // (4-1 + 1) + 1 -> 1~4
-                            // (4-3 + 1) + 3 -> 3~4
-                            val r: Int = random.nextInt(4 - 1 + 1) + 1
-                            //r이 1이라면
-                            if (r == 1) {
-                                //i번째 RectDirButton은 왼쪽임을 저장
-                                RectDirButton[i] = "Left"
+                        //i는 0부터 3보다 작은 동안 i는 1씩 증가
+                        for (i in 0..2) {
+                            //i번째 count2가 8이라면
+                            if (count2[i] == 8) {
+                                //i번째 count2는 0
+                                count2[i] = 0
                             }
-                            //r이 2라면
-                            if (r == 2) {
-                                //i번째 RectDirButton은 오른쪽임을 저장
-                                RectDirButton[i] = "Right"
+                            //i번째 count2가 0이라면
+                            if (count2[i] == 0) {
+                                //정수형 변수r은 1~4 사이의 정수 값을 가진다.
+                                // (4-1 + 1) + 1 -> 1~4
+                                // (4-3 + 1) + 3 -> 3~4
+                                val r: Int = random.nextInt(4 - 1 + 1) + 1
+                                //r이 1이라면
+                                if (r == 1) {
+                                    //i번째 RectDirButton은 왼쪽임을 저장
+                                    RectDirButton[i] = "Left"
+                                }
+                                //r이 2라면
+                                if (r == 2) {
+                                    //i번째 RectDirButton은 오른쪽임을 저장
+                                    RectDirButton[i] = "Right"
+                                }
+                                //r이 3이라면
+                                if (r == 3) {
+                                    //i번째 RectDirButton은 위쪽임을 저장
+                                    RectDirButton[i] = "Up"
+                                }
+                                //r이 4라면
+                                if (r == 4) {
+                                    //i번째 RectDirButton은 아래쪽임을 저장
+                                    RectDirButton[i] = "Down"
+                                }
                             }
-                            //r이 3이라면
-                            if (r == 3) {
-                                //i번째 RectDirButton은 위쪽임을 저장
-                                RectDirButton[i] = "Up"
+                            //i번째 생명이 남아있고, i번째 방향이 아래쪽이라면
+                            if (life[i] > 0 && RectDirButton[i] === "Down") {
+                                //scrh / 2 + i번째 ryd 값이 scrh - scrh /4 - (scrh을 32로 나눈 나머지)/2보다 작다면
+                                if (scrh / 2 + ryd[i] < scrh - scrh / 4 - scrh % 32 / 2) {
+                                    //i번째 ryd값은 scrh/32만큼 증가
+                                    ryd[i] += (scrh / 32).toFloat()
+                                }
                             }
-                            //r이 4라면
-                            if (r == 4) {
-                                //i번째 RectDirButton은 아래쪽임을 저장
-                                RectDirButton[i] = "Down"
+                            //i번째 생명이 남아있고, i번째 방향이 위쪽이라면
+                            if (life[i] > 0 && RectDirButton[i] === "Up") {
+                                //scrh / 2 + i번째 ryd 값이 (scrh을 32로 나눈 나머지)/2보다 크다면
+                                if (scrh / 2 + ryd[i] > scrh % 32 / 2) {
+                                    //i번째 ryd값은 scrh/32만큼 감소
+                                    ryd[i] -= (scrh / 32).toFloat()
+                                }
+                            }
+                            //i번째 생명이 남아있고, i번째 방향이 왼쪽이라면
+                            if (life[i] > 0 && RectDirButton[i] === "Left") {
+                                //scrw / 2 + i번째 rxd 값이 (scrw을 64로 나눈 나머지)/2보다 크다면
+                                if (scrw / 2 + rxd[i] > scrw % 64 / 2) {
+                                    //i번째 rxd값은 scrh/64만큼 감소
+                                    rxd[i] -= (scrw / 64).toFloat()
+                                }
+                            }
+                            //i번째 생명이 남아있고, i번째 방향이 오른쪽이라면
+                            if (life[i] > 0 && RectDirButton[i] === "Right") {
+                                //scrw / 2 + i번째 rxd 값이 scrw - scrw /8 - (scrw을 64로 나눈 나머지)/2보다 작다면
+                                if (scrw / 2 + rxd[i] < scrw - scrw / 8 - scrw % 64 / 2) {
+                                    //i번째 rxd값은 scrh/64만큼 증가
+                                    rxd[i] += (scrw / 64).toFloat()
+                                }
                             }
                         }
-                        //i번째 생명이 남아있고, i번째 방향이 아래쪽이라면
-                        if (life[i] > 0 && RectDirButton[i] === "Down") {
-                            //scrh / 2 + i번째 ryd 값이 scrh - scrh /4 - (scrh을 32로 나눈 나머지)/2보다 작다면
-                            if (scrh / 2 + ryd[i] < scrh - scrh / 4 - scrh % 32 / 2) {
-                                //i번째 ryd값은 scrh/32만큼 증가
-                                ryd[i] += (scrh / 32).toFloat()
-                            }
-                        }
-                        //i번째 생명이 남아있고, i번째 방향이 위쪽이라면
-                        if (life[i] > 0 && RectDirButton[i] === "Up") {
-                            //scrh / 2 + i번째 ryd 값이 (scrh을 32로 나눈 나머지)/2보다 크다면
-                            if (scrh / 2 + ryd[i] > scrh % 32 / 2) {
-                                //i번째 ryd값은 scrh/32만큼 감소
-                                ryd[i] -= (scrh / 32).toFloat()
-                            }
-                        }
-                        //i번째 생명이 남아있고, i번째 방향이 왼쪽이라면
-                        if (life[i] > 0 && RectDirButton[i] === "Left") {
-                            //scrw / 2 + i번째 rxd 값이 (scrw을 64로 나눈 나머지)/2보다 크다면
-                            if (scrw / 2 + rxd[i] > scrw % 64 / 2) {
-                                //i번째 rxd값은 scrh/64만큼 감소
-                                rxd[i] -= (scrw / 64).toFloat()
-                            }
-                        }
-                        //i번째 생명이 남아있고, i번째 방향이 오른쪽이라면
-                        if (life[i] > 0 && RectDirButton[i] === "Right") {
-                            //scrw / 2 + i번째 rxd 값이 scrw - scrw /8 - (scrw을 64로 나눈 나머지)/2보다 작다면
-                            if (scrw / 2 + rxd[i] < scrw - scrw / 8 - scrw % 64 / 2) {
-                                //i번째 rxd값은 scrh/64만큼 증가
-                                rxd[i] += (scrw / 64).toFloat()
-                            }
-                        }
-                    }
 
-                    //아래쪽 버튼을 클릭했거나 아래쪽으로 이동중이라면
-                    if (start == true && DirButton === "Down" && count < 8 || start == false && count > 0 && count < 8 && DirButton === "Down") {
-                        //scrh / 2 + yd가 scrh - scrh /4 - (scrh를 32로 나눈 나머지)/2 보다 작다면
-                        if (scrh / 2 + yd < scrh - scrh / 4 - scrh % 32 / 2) {
-                            //count를 4로 나눈 나머지가 0이라면
-                            if (count % 4 == 0) {
-                                //yd값을 scrh/32만큼 증가
-                                yd += (scrh / 32).toFloat()
-                                //n은 0
-                                n = 0
-                                //MD는 4
-                                MD = 4
-                                //count를 4로 나눈 나머지가 1 또는 3이라면
-                            } else if (count % 4 == 1 || count % 4 == 3) {
-                                //yd값을 scrh/32만큼 증가
-                                yd += (scrh / 32).toFloat()
-                                //n은 1
-                                n = 1
-                                //count를 4로 나눈 나머지가 2라면
-                            } else if (count % 4 == 2) {
-                                //yd값을 scrh/32만큼 증가
-                                yd += (scrh / 32).toFloat()
-                                //n은 2
-                                n = 2
+                        //아래쪽 버튼을 클릭했거나 아래쪽으로 이동중이라면
+                        if (start == true && DirButton === "Down" && count < 8 || start == false && count > 0 && count < 8 && DirButton === "Down") {
+                            //scrh / 2 + yd가 scrh - scrh /4 - (scrh를 32로 나눈 나머지)/2 보다 작다면
+                            if (scrh / 2 + yd < scrh - scrh / 4 - scrh % 32 / 2) {
+                                //count를 4로 나눈 나머지가 0이라면
+                                if (count % 4 == 0) {
+                                    //yd값을 scrh/32만큼 증가
+                                    yd += (scrh / 32).toFloat()
+                                    //n은 0
+                                    n = 0
+                                    //MD는 4
+                                    MD = 4
+                                    //count를 4로 나눈 나머지가 1 또는 3이라면
+                                } else if (count % 4 == 1 || count % 4 == 3) {
+                                    //yd값을 scrh/32만큼 증가
+                                    yd += (scrh / 32).toFloat()
+                                    //n은 1
+                                    n = 1
+                                    //count를 4로 나눈 나머지가 2라면
+                                } else if (count % 4 == 2) {
+                                    //yd값을 scrh/32만큼 증가
+                                    yd += (scrh / 32).toFloat()
+                                    //n은 2
+                                    n = 2
+                                }
                             }
                         }
-                    }
-                    //위쪽 버튼을 클릭했거나 위쪽으로 이동중이라면
-                    if (start == true && DirButton === "Up" && count < 8 || start == false && count > 0 && count < 8 && DirButton === "Up") {
-                        //scrh / 2 + yd가 (scrh를 32로 나눈 나머지)/2 보다 크다면
-                        if (scrh / 2 + yd > scrh % 32 / 2) {
-                            //count를 4로 나눈 나머지가 0이라면
-                            if (count % 4 == 0) {
-                                //yd값을 scrh/32만큼 감소
-                                yd -= (scrh / 32).toFloat()
-                                //n은 6
-                                n = 6
-                                //MD는 3
-                                MD = 3
-                                //count를 4로 나눈 나머지가 1 또는 3이라면
-                            } else if (count % 4 == 1 || count % 4 == 3) {
-                                //yd값을 scrh/32만큼 감소
-                                yd -= (scrh / 32).toFloat()
-                                //n은 7
-                                n = 7
-                                //count를 4로 나눈 나머지가 2라면
-                            } else if (count % 4 == 2) {
-                                //yd값을 scrh/32만큼 감소
-                                yd -= (scrh / 32).toFloat()
-                                //n은 8
-                                n = 8
+                        //위쪽 버튼을 클릭했거나 위쪽으로 이동중이라면
+                        if (start == true && DirButton === "Up" && count < 8 || start == false && count > 0 && count < 8 && DirButton === "Up") {
+                            //scrh / 2 + yd가 (scrh를 32로 나눈 나머지)/2 보다 크다면
+                            if (scrh / 2 + yd > scrh % 32 / 2) {
+                                //count를 4로 나눈 나머지가 0이라면
+                                if (count % 4 == 0) {
+                                    //yd값을 scrh/32만큼 감소
+                                    yd -= (scrh / 32).toFloat()
+                                    //n은 6
+                                    n = 6
+                                    //MD는 3
+                                    MD = 3
+                                    //count를 4로 나눈 나머지가 1 또는 3이라면
+                                } else if (count % 4 == 1 || count % 4 == 3) {
+                                    //yd값을 scrh/32만큼 감소
+                                    yd -= (scrh / 32).toFloat()
+                                    //n은 7
+                                    n = 7
+                                    //count를 4로 나눈 나머지가 2라면
+                                } else if (count % 4 == 2) {
+                                    //yd값을 scrh/32만큼 감소
+                                    yd -= (scrh / 32).toFloat()
+                                    //n은 8
+                                    n = 8
+                                }
                             }
                         }
-                    }
-                    //왼쪽 버튼을 클릭했거나 왼쪽으로 이동중이라면
-                    if (start == true && DirButton === "Left" && count < 8 || start == false && count > 0 && count < 8 && DirButton === "Left") {
-                        //scrw / 2 + xd가 (scrw를 64로 나눈 나머지)/2 보다 크다면
-                        if (scrw / 2 + xd > scrw % 64 / 2) {
-                            //count를 4로 나눈 나머지가 0이라면
-                            if (count % 4 == 0) {
-                                //xd값을 scrw/64만큼 감소
-                                xd -= (scrw / 64).toFloat()
-                                //n은 3
-                                n = 3
-                                //MD는 1
-                                MD = 1
-                                //count를 4로 나눈 나머지가 1 또는 3이라면
-                            } else if (count % 4 == 1 || count % 4 == 3) {
-                                //xd값을 scrw/64만큼 감소
-                                xd -= (scrw / 64).toFloat()
-                                //n은 4
-                                n = 4
-                                //count를 4로 나눈 나머지가 2라면
-                            } else if (count % 4 == 2) {
-                                //xd값을 scrw/64만큼 감소
-                                xd -= (scrw / 64).toFloat()
-                                //n은 5
-                                n = 5
+                        //왼쪽 버튼을 클릭했거나 왼쪽으로 이동중이라면
+                        if (start == true && DirButton === "Left" && count < 8 || start == false && count > 0 && count < 8 && DirButton === "Left") {
+                            //scrw / 2 + xd가 (scrw를 64로 나눈 나머지)/2 보다 크다면
+                            if (scrw / 2 + xd > scrw % 64 / 2) {
+                                //count를 4로 나눈 나머지가 0이라면
+                                if (count % 4 == 0) {
+                                    //xd값을 scrw/64만큼 감소
+                                    xd -= (scrw / 64).toFloat()
+                                    //n은 3
+                                    n = 3
+                                    //MD는 1
+                                    MD = 1
+                                    //count를 4로 나눈 나머지가 1 또는 3이라면
+                                } else if (count % 4 == 1 || count % 4 == 3) {
+                                    //xd값을 scrw/64만큼 감소
+                                    xd -= (scrw / 64).toFloat()
+                                    //n은 4
+                                    n = 4
+                                    //count를 4로 나눈 나머지가 2라면
+                                } else if (count % 4 == 2) {
+                                    //xd값을 scrw/64만큼 감소
+                                    xd -= (scrw / 64).toFloat()
+                                    //n은 5
+                                    n = 5
+                                }
                             }
                         }
-                    }
-                    //오른쪽 버튼을 클릭했거나 오른쪽으로 이동중이라면
-                    if (start == true && DirButton === "Right" && count < 8 || start == false && count > 0 && count < 8 && DirButton === "Right") {
-                        //scrw / 2 + xd가 scrw - scrw /8 - (scrw를 64로 나눈 나머지)/2 보다 작다면
-                        if (scrw / 2 + xd < scrw - scrw / 8 - scrw % 64 / 2) {
-                            //count를 4로 나눈 나머지가 0이라면
-                            if (count % 4 == 0) {
-                                //xd값을 scrw/64만큼 증가
-                                xd += (scrw / 64).toFloat()
-                                //n은 9
-                                n = 9
-                                //MD는 2
-                                MD = 2
-                                //count를 4로 나눈 나머지가 1 또는 3이라면
-                            } else if (count % 4 == 1 || count % 4 == 3) {
-                                //xd값을 scrw/64만큼 증가
-                                xd += (scrw / 64).toFloat()
-                                //n은 10
-                                n = 10
-                                //count를 4로 나눈 나머지가 2라면
-                            } else if (count % 4 == 2) {
-                                //xd값을 scrw/64만큼 증가
-                                xd += (scrw / 64).toFloat()
-                                //n은 11
-                                n = 11
+                        //오른쪽 버튼을 클릭했거나 오른쪽으로 이동중이라면
+                        if (start == true && DirButton === "Right" && count < 8 || start == false && count > 0 && count < 8 && DirButton === "Right") {
+                            //scrw / 2 + xd가 scrw - scrw /8 - (scrw를 64로 나눈 나머지)/2 보다 작다면
+                            if (scrw / 2 + xd < scrw - scrw / 8 - scrw % 64 / 2) {
+                                //count를 4로 나눈 나머지가 0이라면
+                                if (count % 4 == 0) {
+                                    //xd값을 scrw/64만큼 증가
+                                    xd += (scrw / 64).toFloat()
+                                    //n은 9
+                                    n = 9
+                                    //MD는 2
+                                    MD = 2
+                                    //count를 4로 나눈 나머지가 1 또는 3이라면
+                                } else if (count % 4 == 1 || count % 4 == 3) {
+                                    //xd값을 scrw/64만큼 증가
+                                    xd += (scrw / 64).toFloat()
+                                    //n은 10
+                                    n = 10
+                                    //count를 4로 나눈 나머지가 2라면
+                                } else if (count % 4 == 2) {
+                                    //xd값을 scrw/64만큼 증가
+                                    xd += (scrw / 64).toFloat()
+                                    //n은 11
+                                    n = 11
+                                }
                             }
                         }
-                    }
-                    //방향키를 클릭한 상태이고, 카운트 수가 0이라면
-                    if (start == true && count == 0) {
-                        //카운트 수는 1씩 증가한다.
-                        count += 1
-                        //또한
-                    } else {
-                        //카운트 수가 0보다 크고, 8보다 작다면 카운트 수는 1씩 증가한다.
-                        if (count > 0 && count < 8) count += 1
-                    }
-                    //i는 0부터 3보다 작은 동안 1씩 증가한다.
-                    for (i in 0..2) {
-                        //적군의 생명이 0보다 크다면
-                        if (life[i] > 0) {
-                            //카운트 수를 1씩 증가시킨다.
-                            count2[i] += 1
+                        //방향키를 클릭한 상태이고, 카운트 수가 0이라면
+                        if (start == true && count == 0) {
+                            //카운트 수는 1씩 증가한다.
+                            count += 1
+                            //또한
+                        } else {
+                            //카운트 수가 0보다 크고, 8보다 작다면 카운트 수는 1씩 증가한다.
+                            if (count > 0 && count < 8) count += 1
                         }
+                        //i는 0부터 3보다 작은 동안 1씩 증가한다.
+                        for (i in 0..2) {
+                            //적군의 생명이 0보다 크다면
+                            if (life[i] > 0) {
+                                //카운트 수를 1씩 증가시킨다.
+                                count2[i] += 1
+                            }
+                        }
+                        //0.1초 지연한다.
+                        sleep(100)
+                        //예외 사항
+                    } catch (e: Exception) {
                     }
-                    //0.1초 지연한다.
-                    sleep(100)
-                    //예외 사항
-                } catch (e: Exception) {
                 }
             }
         }
-    }*/
 
         /*    companion object {
         private const val SQL_CREATE_ENTRIES =

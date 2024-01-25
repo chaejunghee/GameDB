@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.media.MediaPlayer
 import android.provider.BaseColumns
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -125,18 +126,18 @@ open class Game1(con: Context?, at: AttributeSet?) : View(con, at) {
     private var T: GameThread? = null*/
 
     //미디어 플레이어를 사용하기위한 변수 설정.
-    //var mp: MediaPlayer
+    var bgBGM: MediaPlayer
 
     //Game이란 이름의 생성자 생성 -> Context는 앱에 대한 다양한 정보가 들어 있다. AttributeSet은 xml정보를 가져온다.
     init {
-        /*//부모 클래스의 생성자를 불러와서 초기화시킨다.
+        //부모 클래스의 생성자를 불러와서 초기화시킨다.
 
         //미디어 플레이어에서 사용할 파일 경로 연결.
-        mp = MediaPlayer.create(con, R.raw.timeloop)
+        bgBGM = MediaPlayer.create(con, R.raw.background_bgm)
         //timeloop파일 재생
-        mp.start()
+        bgBGM.start()
         //timeloop파일 무한재생
-        mp.setLooping(true)*/
+        bgBGM.setLooping(true)
     }
 
     //뷰의 크기가 변경될 때 호출

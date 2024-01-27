@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Paint
 import android.media.MediaPlayer
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -93,7 +94,10 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     var MD = 4                           //미사일 초기 방향 (좌:1 우:2 상:3 하:4)
 
     //p라는 이름의 페인트 변수 설정
-    //var paint: Paint = Paint()
+    var paint: Paint = Paint()
+
+    //점수
+    var score = 0
 
     //thread라는 이름의 게임 스레드를 설정
     private var thread: GameThread? = null
@@ -412,6 +416,11 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                 }
             }
         }
+
+        //점수 텍스트
+        paint.textSize = scrw / 24f
+        paint.textAlign = Paint.Align.RIGHT
+        canvas.drawText("score : $score", (scrw - scrw / 64).toFloat(), scrh / 10f, paint)
     }
 
     //터치이벤트 처리

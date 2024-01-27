@@ -1,11 +1,13 @@
 package com.example.myapplication
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.media.MediaPlayer
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import kotlin.random.Random
@@ -51,24 +53,27 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     var save = 0
     var savecount = 1
 
-    //이미지 파일 (플레이어, 방향키, 공격 버튼, 적)
+    //이미지 파일 (플레이어, 방향키, 공격 버튼, 적, 생명)
     lateinit var player: Bitmap
     lateinit var moveButton: Bitmap
     lateinit var attackButton: Bitmap
     lateinit var enemy: Bitmap
+    lateinit var life: Bitmap
 
     //스크린의 너비값과 높이값
     var scrw = 0
     var scrh = 0
 
     //플레이어 관련 변수
-    var xd = -120f      //플레이어 이미지 기준점 x좌표  (*게임 시작 시 중앙에 배치하기 위해 임의로 -120f값 넣음)
-    var yd = -80f       //플레이어 이미지 기준점 y좌표  (*게임 시작 시 중앙에 배치하기 위해 임의로 -80f값 넣음)
+    var xd = 0f      //플레이어 이미지 기준점 x좌표  (*게임 시작 시 중앙에 배치하기 위해 임의로 -120f값 넣음)
+    var yd = 0f       //플레이어 이미지 기준점 y좌표  (*게임 시작 시 중앙에 배치하기 위해 임의로 -80f값 넣음)
     var count = 0       //플레이어의 이동을 위한 카운트 수를 저장할 변수
     var n = 0           //플레이어 이미지 전환을 판별하기 위한 변수
     var start = false   //방향키 클릭 유무 (false(=0)(*안 누름)/true(=1)(*누름))
     private var DirButton: String? = null   //플레이어가 정지 상태에 있는 동안 어떤 방향키를 클릭했는지 저장할 문자열 변수
     private var DirButton2: String? = null  //플레이어가 이동하고 있는 상태에서 어떤 방향키를 클릭했는지 저장할 문자열 변수
+
+    var hp = 5
 
     //적 관련 변수   (화면에 적을 3개까지 표시) (적 1~3번의 각 좌표/카운트 수/생명 값/이동 방향을 제어하기 위해 배열형식으로 설정)
     var exd = FloatArray(3)     //적의 x좌표
@@ -140,6 +145,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     }
 
     //캔버스 위에 그리기
+    @SuppressLint("SuspiciousIndentation")
     protected override fun onDraw(canvas: Canvas) {
 
         /*//테이블 내에 있는 DB 삭제
@@ -366,6 +372,35 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
             (scrh - attackButton.height).toFloat(),
             null
         )
+
+        //라이프 이미지를 담을 비트맵 배열
+        val lifeArray = arrayOfNulls<Bitmap>(5)
+
+        //라이프 이미지 파일 설정
+        life = BitmapFactory.decodeResource(getResources(), R.drawable.life01)
+
+        for (i in 4 downTo 0) {
+            //라이프 이미지 크기 설정, 비트맵 배열에 라이프 이미지 추가
+            lifeArray[i] = Bitmap.createScaledBitmap(life, scrw / 32 * 3, scrh / 16 * 3, true)
+
+            for (j in 0..2) {
+                if (
+                    hp > 0
+                    && xd + 960 <= scrw / 2 + (scrw - scrw % 64) / 8 + exd[j]
+                    && xd + 960 >= scrw / 2 + exd[j]
+                    && yd + 477 >= scrh / 2 + eyd[j]
+                    && yd + 477 <= scrh / 2 + (scrh - scrh % 32) / 4 + eyd[j]
+                ) {
+                    hp -= 1
+                    //라이프 이미지 파일 설정
+                    life = BitmapFactory.decodeResource(getResources(), R.drawable.life02)
+                    Log.d("test1", "hp:$hp")
+                }
+            }
+
+            //캔버스에 라이프 그리기
+            canvas.drawBitmap(lifeArray[i]!!, (i * life.width).toFloat(), 0f, null)
+        }
     }
 
     //터치이벤트 처리

@@ -247,6 +247,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
 
             //적 이미지 크기 설정
             enemy = Bitmap.createScaledBitmap(enemy, scrw / 8, scrh / 4, true)
+
             //적의 체력이 남아있으면 캔버스에 적 그리기
             if (eLife[i] > 0) {
                 canvas.drawBitmap(enemy, scrw / 2 + exd[i], scrh / 2 + eyd[i], null)
@@ -375,14 +376,18 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
 
         //라이프 이미지를 담을 비트맵 배열
         val lifeArray = arrayOfNulls<Bitmap>(5)
-
         //라이프 이미지 파일 설정
         life = BitmapFactory.decodeResource(getResources(), R.drawable.life01)
 
         for (i in 4 downTo 0) {
             //라이프 이미지 크기 설정, 비트맵 배열에 라이프 이미지 추가
             lifeArray[i] = Bitmap.createScaledBitmap(life, scrw / 32 * 3, scrh / 16 * 3, true)
-
+            //플레이어 이미지의 좌표가 적 이미지의 좌표 범위 안에 들어가면 플레이어와 적이 충돌한 것으로 간주
+            //***스크린 상에서 플레이어와 적이 같은 위치지만 좌표값이 다르게 나와서
+            //***(적과 플레이어가 모두 좌측 상단에 위치할 때, 적의 좌표값이 (0,0)이면 플레이어는 (-960,-477)로 나왔음)
+            //***차이나는 좌표값만큼 직접 플레이어의 좌표값에 더해 비교함
+            //-----------------------------------------------------------------------------------------------------
+            //플레이어의 체력이 남아있고 j번째 적과 플레이어가 충돌했다면
             for (j in 0..2) {
                 if (
                     hp > 0
@@ -391,10 +396,10 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                     && yd + 477 >= scrh / 2 + eyd[j]
                     && yd + 477 <= scrh / 2 + (scrh - scrh % 32) / 4 + eyd[j]
                 ) {
+                    //플레이어 체력 1 감소
                     hp -= 1
-                    //라이프 이미지 파일 설정
+                    //라이프 이미지 파일 변경
                     life = BitmapFactory.decodeResource(getResources(), R.drawable.life02)
-                    Log.d("test1", "hp:$hp")
                 }
             }
 

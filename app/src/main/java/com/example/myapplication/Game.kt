@@ -7,7 +7,6 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.media.MediaPlayer
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import kotlin.random.Random
@@ -58,7 +57,8 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     lateinit var moveButton: Bitmap
     lateinit var attackButton: Bitmap
     lateinit var enemy: Bitmap
-    lateinit var life: Bitmap
+    lateinit var life01: Bitmap
+    lateinit var life02: Bitmap
 
     //스크린의 너비값과 높이값
     var scrw = 0
@@ -298,7 +298,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                     mx[i] += scrw / 64f
                 }
                 //상
-                //i번재 md가 3이라면
+                //i번째 md가 3이라면
                 if (md[i] == 3) {
                     //i번째 미사일 이미지를 위쪽 방향으로 나가는 미사일 이미지로 설정
                     missile[i] = BitmapFactory.decodeResource(getResources(), R.drawable.missile03)
@@ -321,7 +321,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                     //캔버스에 i번째 미사일 그리기
                     canvas.drawBitmap(missile[i]!!, mx[i], my[i], null)
 
-                    //i번재 my값을 scrh/32만큼 증가
+                    //i번째 my값을 scrh/32만큼 증가
                     //이미지를 아래쪽으로 이동시킴으로써 미사일 발사를 구현
                     my[i] += scrh / 32f
                 }
@@ -375,13 +375,22 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
         )
 
         //라이프 이미지를 담을 비트맵 배열
-        val lifeArray = arrayOfNulls<Bitmap>(5)
+        val lifeArray01 = arrayOfNulls<Bitmap>(5)
+        val lifeArray02 = arrayOfNulls<Bitmap>(5)
         //라이프 이미지 파일 설정
-        life = BitmapFactory.decodeResource(getResources(), R.drawable.life01)
+        life01 = BitmapFactory.decodeResource(getResources(), R.drawable.life01)
+        life02 = BitmapFactory.decodeResource(getResources(), R.drawable.life02)
 
         for (i in 4 downTo 0) {
             //라이프 이미지 크기 설정, 비트맵 배열에 라이프 이미지 추가
-            lifeArray[i] = Bitmap.createScaledBitmap(life, scrw / 32 * 3, scrh / 16 * 3, true)
+            lifeArray01[i] = Bitmap.createScaledBitmap(life01, scrw / 32 * 3, scrh / 16 * 3, true)
+            lifeArray02[i] = Bitmap.createScaledBitmap(life02, scrw / 32 * 3, scrh / 16 * 3, true)
+
+            //캔버스에 라이프 그리기
+            //검은 하트와 빨간 하트를 덧대어 그림
+            canvas.drawBitmap(lifeArray01[i]!!, (i * life01.width).toFloat(), 0f, null)
+            canvas.drawBitmap(lifeArray02[i]!!, (i * life02.width).toFloat(), 0f, null)
+
             //플레이어 이미지의 좌표가 적 이미지의 좌표 범위 안에 들어가면 플레이어와 적이 충돌한 것으로 간주
             //***스크린 상에서 플레이어와 적이 같은 위치지만 좌표값이 다르게 나와서
             //***(적과 플레이어가 모두 좌측 상단에 위치할 때, 적의 좌표값이 (0,0)이면 플레이어는 (-960,-477)로 나왔음)
@@ -398,13 +407,10 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                 ) {
                     //플레이어 체력 1 감소
                     hp -= 1
-                    //라이프 이미지 파일 변경
-                    life = BitmapFactory.decodeResource(getResources(), R.drawable.life02)
+
+                    //lifeArray02[i]번째 비트맵 이미지 삭제(하는 방법을 모르겠음..)
                 }
             }
-
-            //캔버스에 라이프 그리기
-            canvas.drawBitmap(lifeArray[i]!!, (i * life.width).toFloat(), 0f, null)
         }
     }
 

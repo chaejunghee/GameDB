@@ -5,9 +5,13 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.media.MediaPlayer
+import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import kotlin.random.Random
@@ -66,8 +70,8 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     var scrh = 0
 
     //플레이어 관련 변수
-    var xd = 0f      //플레이어 이미지 기준점 x좌표  (*게임 시작 시 중앙에 배치하기 위해 임의로 -120f값 넣음)
-    var yd = 0f       //플레이어 이미지 기준점 y좌표  (*게임 시작 시 중앙에 배치하기 위해 임의로 -80f값 넣음)
+    var xd = -120f      //플레이어 이미지 기준점 x좌표  (*게임 시작 시 중앙에 배치하기 위해 임의로 -120f값 넣음)
+    var yd = -80f       //플레이어 이미지 기준점 y좌표  (*게임 시작 시 중앙에 배치하기 위해 임의로 -80f값 넣음)
     var count = 0       //플레이어의 이동을 위한 카운트 수를 저장할 변수
     var n = 0           //플레이어 이미지 전환을 판별하기 위한 변수
     var start = false   //방향키 클릭 유무 (false(=0)(*안 누름)/true(=1)(*누름))
@@ -397,7 +401,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
 
             //플레이어 이미지의 좌표가 적 이미지의 좌표 범위 안에 들어가면 플레이어와 적이 충돌한 것으로 간주
             //***스크린 상에서 플레이어와 적이 같은 위치지만 좌표값이 다르게 나와서
-            //***(적과 플레이어가 모두 좌측 상단에 위치할 때, 적의 좌표값이 (0,0)이면 플레이어는 (-960,-477)로 나왔음)
+            //***(적과 플레이어가 모두 좌측 상단에 위치할 때, 적의 좌표값이 (0,0)이면 플레이어는 (-960,-467.5625)로 나왔음)
             //***차이나는 좌표값만큼 직접 플레이어의 좌표값에 더해 비교함
             //-----------------------------------------------------------------------------------------------------
             //플레이어의 체력이 남아있고 j번째 적과 플레이어가 충돌했다면
@@ -406,15 +410,19 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                     hp > 0
                     && xd + 960 <= scrw / 2 + (scrw - scrw % 64) / 8 + exd[j]
                     && xd + 960 >= scrw / 2 + exd[j]
-                    && yd + 477 >= scrh / 2 + eyd[j]
-                    && yd + 477 <= scrh / 2 + (scrh - scrh % 32) / 4 + eyd[j]
+                    && yd + 467.5625 >= scrh / 2 + eyd[j]
+                    && yd + 467.5625 <= scrh / 2 + (scrh - scrh % 32) / 4 + eyd[j]
                 ) {
                     //플레이어 체력 1 감소
                     hp -= 1
 
-                    //lifeArray02[i]번째 비트맵 이미지 삭제(하는 방법을 모르겠음..)
+                    //lifeArray02[i]번째 하트 이미지 투명 처리
+                    lifeArray02[i]?.eraseColor(Color.TRANSPARENT)
                 }
             }
+            //적과 플레이어가 충돌했는지 판별하는 부분이 이상한..?
+            //충돌한 순간만 처리하도록 해야하는데 충돌해서 겹쳐진 상태일 때도 처리하는 듯함
+            //미사일과 적이 충돌했을 땐 충돌 직후 미사일의 이미지를 비활성화하기 때문에 충돌한 순간만 실행되는 것 같음
         }
 
         //점수 텍스트

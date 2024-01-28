@@ -8,10 +8,8 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.media.MediaPlayer
-import android.os.Handler
-import android.os.Looper
+import android.media.SoundPool
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import kotlin.random.Random
@@ -61,7 +59,6 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     lateinit var player: Bitmap
     lateinit var moveButton: Bitmap
     lateinit var attackButton: Bitmap
-    lateinit var enemy: Bitmap
     lateinit var life01: Bitmap
     lateinit var life02: Bitmap
 
@@ -78,7 +75,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     private var DirButton: String? = null   //플레이어가 정지 상태에 있는 동안 어떤 방향키를 클릭했는지 저장할 문자열 변수
     private var DirButton2: String? = null  //플레이어가 이동하고 있는 상태에서 어떤 방향키를 클릭했는지 저장할 문자열 변수
 
-    var hp = 5
+    var hp = 5  //플레이어 최대 체력
 
     //적 관련 변수   (화면에 적을 3개까지 표시) (적 1~3번의 각 좌표/카운트 수/생명 값/이동 방향을 제어하기 위해 배열형식으로 설정)
     var exd = FloatArray(3)     //적의 x좌표
@@ -86,7 +83,9 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     var count2 = IntArray(3)    //적의 이동을 위한 카운트 수를 저장할 변수
     var eLife = IntArray(3)     //적의 생명 값
     var random = Random              //랜덤 변수
-    var ED = 4                       //적의 방향 (좌:1 우:2 상:3 하:4)
+    var EC = 3                       //화면에 보이는 적 수
+    var EN = IntArray(3)        //적 번호
+    var ED = IntArray(3)        //적의 방향
     private val EDirButton = arrayOfNulls<String>(3)    //적의 이동 방향을 저장할 문자열 변수
 
     //미사일 관련 변수 (화면에 미사일을 10개까지 표시) (미사일 1~10번의 각 좌표/번호/방향을 제어하기 위해 배열형식으로 설정)
@@ -106,19 +105,23 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     //thread라는 이름의 게임 스레드를 설정
     private var thread: GameThread? = null
 
-    //효과음
-    var bgBGM: MediaPlayer      //배경음
+    //효과음   (배경음, 플레이어 공격, 플레이어 데미지, 적 공격, 적 데미지, 점수)
+    var bgBGM = MediaPlayer.create(con, R.raw.background_bgm)
+    var soundPool= SoundPool.Builder().build()
+    val playerAttack = soundPool.load(con, R.raw.player_attack, 1)
+    val playerDamage = soundPool.load(con, R.raw.player_damage, 1)
+    val enemyAttack = soundPool.load(con, R.raw.enemy_attack, 1)
+    val enemyDamage = soundPool.load(con, R.raw.enemy_damage, 1)
+    val scoreBGM = soundPool.load(con, R.raw.score_bgm, 1)
 
     //초기화 블록
     //생성자 생성 -> Context는 앱에 대한 다양한 정보가 들어 있다. AttributeSet은 xml정보를 가져온다.
     init {
         //부모 클래스의 생성자를 불러와서 초기화시킨다.
 
-        //사용할 파일 경로 연결
-        bgBGM = MediaPlayer.create(con, R.raw.background_bgm)
-        //background_bgm파일 재생
+        //배경음 재생
         bgBGM.start()
-        //background_bgm파일 무한재생
+        //배경음 무한재생
         bgBGM.setLooping(true)
     }
 
@@ -133,6 +136,8 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
         for (i in 0..2) {
             //모든 적이 미사일에 2번까지 견디도록 설정
             eLife[i] = 2
+            //적 활성화 (1:활성화 0:비활성화)
+            EN[i] = 1
         }
 
         //스레드 값이 비었다면
@@ -232,33 +237,57 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
         //캔버스에 플레이어 그리기
         canvas.drawBitmap(player, (scrw / 2f) + xd, (scrh / 2f) + yd, null)
 
-        //적 이미지 파일 설정
+
+        //enemy에 3개까지의 비트맵 정보를 저장함
+        val enemy: Array<Bitmap?> = arrayOfNulls<Bitmap>(3)
+
+        //적 수는 3으로 설정
+        EC = 3
+
         for (i in 0..2) {
-            when (ED) {
-                //좌
-                1 -> {
-                    enemy = BitmapFactory.decodeResource(getResources(), R.drawable.enemy01)
-                }
-                //우
-                2 -> {
-                    enemy = BitmapFactory.decodeResource(getResources(), R.drawable.enemy02)
-                }
-                //상
-                3 -> {
-                    enemy = BitmapFactory.decodeResource(getResources(), R.drawable.enemy03)
-                }
-                //하
-                4 -> {
-                    enemy = BitmapFactory.decodeResource(getResources(), R.drawable.enemy04)
-                }
+            //i번째 적 번호가 0이면(적이 비활성화된 상태라면)
+            if (EN[i] == 0) {
+                //***시간 지연 필요
+                //i번째 적 활성화 후 적 수 +1
+                EN[i] == 1
+                EC += 1
             }
+            //i번째 적 번호가 1이면(적이 활성화된 상태라면)
+            if (EN[i] == 1) {
+                //방향에 따라 적 이미지 파일 설정
+                when (ED[i]) {
+                    //좌
+                    1 -> {
+                        enemy[i] = BitmapFactory.decodeResource(getResources(), R.drawable.enemy01)
+                    }
+                    //우
+                    2 -> {
+                        enemy[i] = BitmapFactory.decodeResource(getResources(), R.drawable.enemy02)
+                    }
+                    //상
+                    3 -> {
+                        enemy[i] = BitmapFactory.decodeResource(getResources(), R.drawable.enemy03)
+                    }
+                    //하
+                    4 -> {
+                        enemy[i] = BitmapFactory.decodeResource(getResources(), R.drawable.enemy04)
+                    }
+                }
 
-            //적 이미지 크기 설정
-            enemy = Bitmap.createScaledBitmap(enemy, scrw / 8, scrh / 4, true)
+                //적 이미지 크기 설정
+                enemy[i] = Bitmap.createScaledBitmap(enemy[i]!!, scrw / 8, scrh / 4, true)
 
-            //적의 체력이 남아있으면 캔버스에 적 그리기
-            if (eLife[i] > 0) {
-                canvas.drawBitmap(enemy, scrw / 2 + exd[i], scrh / 2 + eyd[i], null)
+                //적의 체력이 남아있으면 캔버스에 적 그리기
+                if (eLife[i] > 0) {
+                    canvas.drawBitmap(enemy[i]!!, scrw / 2 + exd[i], scrh / 2 + eyd[i], null)
+                }
+                //적의 체력이 없으면 i번째 적 비활성화 후 적 수 -1
+                else {
+                    EN[i] == 0
+                    EC -= 1
+                    //score += 10
+                    //soundPool.play(scoreBGM, 1.0f, 1.0f, 0, 0, 1.0f)
+                }
             }
         }
 
@@ -349,6 +378,9 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                     ) {
                         //j번째 적의 생명력 1감소
                         eLife[j] -= 1
+
+                        soundPool.play(enemyDamage, 1.0f, 1.0f, 0, 0, 1.0f)
+
                         //i번째 미사일을 비활성화
                         missileNum[i] = 0
                     }
@@ -522,6 +554,8 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                         break
                     }
                 }
+
+                soundPool.play(playerAttack, 1.0f, 1.0f, 0, 0, 1.0f)
             }
             //방향키와 공격 버튼이 아닌 곳을 터치한 경우라면
             else {
@@ -652,7 +686,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                         //좌
                         //i번째 적의 생명이 남아있고, 방향이 왼쪽이라면
                         if (eLife[i] > 0 && EDirButton[i] == "Left") {
-                            ED = 1
+                            ED[i] = 1
                             //scrw / 2 + i번째 exd 값이 (scrw을 64로 나눈 나머지)/2보다 크다면
                             if (scrw / 2 + exd[i] > scrw % 64 / 2) {
                                 //i번째 exd값은 scrh/64만큼 감소
@@ -663,7 +697,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                         //우
                         //i번째 적의 생명이 남아있고, 방향이 오른쪽이라면
                         if (eLife[i] > 0 && EDirButton[i] == "Right") {
-                            ED = 2
+                            ED[i] = 2
                             //scrw / 2 + i번째 exd 값이 scrw - scrw /8 - (scrw을 64로 나눈 나머지)/2보다 작다면
                             if (scrw / 2 + exd[i] < scrw - scrw / 8 - scrw % 64 / 2) {
                                 //i번째 exd값은 scrh/64만큼 증가
@@ -674,7 +708,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                         //상
                         //i번째 적의 생명이 남아있고, 방향이 위쪽이라면
                         if (eLife[i] > 0 && EDirButton[i] == "Up") {
-                            ED = 3
+                            ED[i] = 3
                             //scrh / 2 + i번째 eyd 값이 (scrh을 32로 나눈 나머지)/2보다 크다면
                             if (scrh / 2 + eyd[i] > scrh % 32 / 2) {
                                 //i번째 eyd값은 scrh/32만큼 감소
@@ -685,7 +719,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                         //하
                         //i번째 적의 생명이 남아있고, 방향이 아래쪽이라면
                         if (eLife[i] > 0 && EDirButton[i] == "Down") {
-                            ED = 4
+                            ED[i] = 4
                             //scrh / 2 + i번째 eyd 값이 scrh - scrh /4 - (scrh을 32로 나눈 나머지)/2보다 작다면
                             if (scrh / 2 + eyd[i] < scrh - scrh / 4 - scrh % 32 / 2) {
                                 //i번째 eyd값은 scrh/32만큼 증가

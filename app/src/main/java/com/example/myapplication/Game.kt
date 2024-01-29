@@ -59,8 +59,6 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     lateinit var player: Bitmap
     lateinit var moveButton: Bitmap
     lateinit var attackButton: Bitmap
-    lateinit var life01: Bitmap
-    lateinit var life02: Bitmap
 
     //스크린의 너비값과 높이값
     var scrw = 0
@@ -76,6 +74,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     private var DirButton2: String? = null  //플레이어가 이동하고 있는 상태에서 어떤 방향키를 클릭했는지 저장할 문자열 변수
 
     var hp = 3  //플레이어 최대 체력
+    var LN = IntArray(3)    //플레이어 라이프 번호
 
     //적 관련 변수   (화면에 적을 5개까지 표시) (적 1~5번의 각 좌표/카운트 수/생명 값/이동 방향을 제어하기 위해 배열형식으로 설정)
     var exd = FloatArray(5)     //적의 x좌표
@@ -149,6 +148,11 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
             eLife[i] = 2
             //적 활성화 (1:활성화 0:비활성화)
             EN[i] = 1
+        }
+
+        //플레이어 라이프 활성화
+        for (i in 2 downTo 0) {
+            LN[i] = 1
         }
 
         //스레드 값이 비었다면
@@ -424,22 +428,24 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
             null
         )
 
-        //라이프 이미지를 담을 비트맵 배열
-        val lifeArray01 = arrayOfNulls<Bitmap>(3)
-        val lifeArray02 = arrayOfNulls<Bitmap>(3)
-        //라이프 이미지 파일 설정
-        life01 = BitmapFactory.decodeResource(getResources(), R.drawable.life01)
-        life02 = BitmapFactory.decodeResource(getResources(), R.drawable.life02)
+
+        //수정부분
+        val life01: Array<Bitmap?> = arrayOfNulls<Bitmap>(3)    //검정하트 비트맵 배열
+        val life02: Array<Bitmap?> = arrayOfNulls<Bitmap>(3)    //빨간하트 비트맵 배열
 
         for (i in 2 downTo 0) {
-            //라이프 이미지 크기 설정, 비트맵 배열에 라이프 이미지 추가
-            lifeArray01[i] = Bitmap.createScaledBitmap(life01, scrw / 32 * 3, scrh / 16 * 3, true)
-            lifeArray02[i] = Bitmap.createScaledBitmap(life02, scrw / 32 * 3, scrh / 16 * 3, true)
+            //검정하트를 밑에 먼저 그리기
+            life01[i] = BitmapFactory.decodeResource(getResources(), R.drawable.life01)
+            life01[i] = Bitmap.createScaledBitmap(life01[i]!!, scrw / 32 * 3, scrh / 16 * 3, true)
+            canvas.drawBitmap(life01[i]!!, (i * life01[i]!!.width).toFloat(), 0f, null)
 
-            //캔버스에 라이프 그리기
-            //검은 하트와 빨간 하트를 덧대어 그림
-            canvas.drawBitmap(lifeArray01[i]!!, (i * life01.width).toFloat(), 0f, null)
-            canvas.drawBitmap(lifeArray02[i]!!, (i * life02.width).toFloat(), 0f, null)
+            //LN[i]가 1이면 라이프 활성화
+            //검정하트 위에 빨간하트 그리기
+            if (LN[i] == 1) {
+                life02[i] = BitmapFactory.decodeResource(getResources(), R.drawable.life02)
+                life02[i] = Bitmap.createScaledBitmap(life02[i]!!, scrw / 32 * 3, scrh / 16 * 3, true)
+                canvas.drawBitmap(life02[i]!!, (i * life02[i]!!.width).toFloat(), 0f, null)
+            }
 
             //플레이어 이미지의 좌표가 적 이미지의 좌표 범위 안에 들어가면 플레이어와 적이 충돌한 것으로 간주
             //스크린 상에서 플레이어와 적이 같은 위치지만 좌표값이 다르게 나와서
@@ -461,13 +467,10 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                     //플레이어 체력 1 감소
                     hp -= 1
 
-                    //lifeArray02[i]번째 하트 이미지 투명 처리
-                    lifeArray02[i]?.eraseColor(Color.TRANSPARENT)
+                    //라이프 비활성화
+                    LN[i] = 0
                 }
             }
-            //적과 플레이어가 충돌했는지 판별하는 부분이 이상한..?
-            //충돌한 순간만 처리하도록 해야하는데 충돌해서 겹쳐진 상태일 때도 처리하는 듯함
-            //미사일과 적이 충돌했을 땐 충돌 직후 미사일의 이미지를 비활성화하기 때문에 충돌한 순간만 실행되는 것 같음
         }
 
         /*//점수 텍스트

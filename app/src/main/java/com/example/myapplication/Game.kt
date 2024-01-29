@@ -8,6 +8,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.media.MediaPlayer
 import android.media.SoundPool
+import android.os.CountDownTimer
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -74,18 +75,18 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     private var DirButton: String? = null   //플레이어가 정지 상태에 있는 동안 어떤 방향키를 클릭했는지 저장할 문자열 변수
     private var DirButton2: String? = null  //플레이어가 이동하고 있는 상태에서 어떤 방향키를 클릭했는지 저장할 문자열 변수
 
-    var hp = 5  //플레이어 최대 체력
+    var hp = 3  //플레이어 최대 체력
 
-    //적 관련 변수   (화면에 적을 3개까지 표시) (적 1~3번의 각 좌표/카운트 수/생명 값/이동 방향을 제어하기 위해 배열형식으로 설정)
-    var exd = FloatArray(3)     //적의 x좌표
-    var eyd = FloatArray(3)     //적의 y좌표
-    var count2 = IntArray(3)    //적의 이동을 위한 카운트 수를 저장할 변수
-    var eLife = IntArray(3)     //적의 생명 값
+    //적 관련 변수   (화면에 적을 5개까지 표시) (적 1~5번의 각 좌표/카운트 수/생명 값/이동 방향을 제어하기 위해 배열형식으로 설정)
+    var exd = FloatArray(5)     //적의 x좌표
+    var eyd = FloatArray(5)     //적의 y좌표
+    var count2 = IntArray(5)    //적의 이동을 위한 카운트 수를 저장할 변수
+    var eLife = IntArray(5)     //적의 생명 값
     var random = Random              //랜덤 변수
-    var EC = 3                       //화면에 보이는 적 수
-    var EN = IntArray(3)        //적 번호
-    var ED = IntArray(3)        //적의 방향
-    private val EDirButton = arrayOfNulls<String>(3)    //적의 이동 방향을 저장할 문자열 변수
+    var EC = 5                       //화면에 보이는 적 수
+    var EN = IntArray(5)        //적 번호
+    var ED = IntArray(5)        //적의 방향
+    private val EDirButton = arrayOfNulls<String>(5)    //적의 이동 방향을 저장할 문자열 변수
 
     //미사일 관련 변수 (화면에 미사일을 10개까지 표시) (미사일 1~10번의 각 좌표/번호/방향을 제어하기 위해 배열형식으로 설정)
     var mx = FloatArray(10)         //미사일 x좌표
@@ -106,12 +107,23 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
 
     //효과음   (배경음, 플레이어 공격, 플레이어 데미지, 적 공격, 적 데미지, 점수)
     var bgBGM = MediaPlayer.create(con, R.raw.background_bgm)
-    var soundPool= SoundPool.Builder().build()
+    var soundPool = SoundPool.Builder().build()
     val playerAttack = soundPool.load(con, R.raw.player_attack, 1)
     val playerDamage = soundPool.load(con, R.raw.player_damage, 1)
     val enemyAttack = soundPool.load(con, R.raw.enemy_attack, 1)
     val enemyDamage = soundPool.load(con, R.raw.enemy_damage, 1)
     val scoreBGM = soundPool.load(con, R.raw.score_bgm, 1)
+
+    /*    val countDown:CountDownTimer= object : CountDownTimer(30000, 1000){
+            override fun onTick(p0: Long) {
+
+            }
+
+            override fun onFinish() {
+                TODO("Not yet implemented")
+            }
+
+        }*/
 
     //초기화 블록
     //생성자 생성 -> Context는 앱에 대한 다양한 정보가 들어 있다. AttributeSet은 xml정보를 가져온다.
@@ -131,8 +143,8 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
         scrw = sw   //뷰의 폭 정보 저장
         scrh = sh   //뷰의 높이 정보 저장
 
-        //1~3번 적의 생명력 저장
-        for (i in 0..2) {
+        //1~5번 적의 생명력 저장
+        for (i in 0..4) {
             //모든 적이 미사일에 2번까지 견디도록 설정
             eLife[i] = 2
             //적 활성화 (1:활성화 0:비활성화)
@@ -236,13 +248,13 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
         canvas.drawBitmap(player, (scrw / 2f) + xd, (scrh / 2f) + yd, null)
 
 
-        //enemy에 3개까지의 비트맵 정보를 저장함
-        val enemy: Array<Bitmap?> = arrayOfNulls<Bitmap>(3)
+        //enemy에 5개까지의 비트맵 정보를 저장함
+        val enemy: Array<Bitmap?> = arrayOfNulls<Bitmap>(5)
 
-        //적 수는 3으로 설정
-        EC = 3
+        //적 수는 5으로 설정
+        EC = 5
 
-        for (i in 0..2) {
+        for (i in 0..4) {
             //i번째 적 번호가 0이면(적이 비활성화된 상태라면)
             if (EN[i] == 0) {
                 //***시간 지연 필요
@@ -281,7 +293,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                 }
                 //적의 체력이 없으면 i번째 적 비활성화 후 적 수 -1
                 else {
-                    EN[i] == 0
+                    EN[i] = 0
                     EC -= 1
                     //score += 10
                     //soundPool.play(scoreBGM, 1.0f, 1.0f, 0, 0, 1.0f)
@@ -361,7 +373,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                     my[i] += scrh / 32f
                 }
 
-                for (j in 0..2) {
+                for (j in 0..4) {
                     //미사일 이미지의 좌표가(mx[i], my[i])
                     // 적 이미지의 좌표 범위 안에 (ⓧ:scrw / 2 + exd[j] ~ scrw / 2 + (scrw - scrw % 64) / 8 + exd[j],
                     // ⓨ:scrh / 2 + eyd[j] ~ scrh / 2 + (scrh - scrh % 32) / 4 + eyd[j]) 들어가면 적이 미사일에 맞은 것으로 간주
@@ -413,13 +425,13 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
         )
 
         //라이프 이미지를 담을 비트맵 배열
-        val lifeArray01 = arrayOfNulls<Bitmap>(5)
-        val lifeArray02 = arrayOfNulls<Bitmap>(5)
+        val lifeArray01 = arrayOfNulls<Bitmap>(3)
+        val lifeArray02 = arrayOfNulls<Bitmap>(3)
         //라이프 이미지 파일 설정
         life01 = BitmapFactory.decodeResource(getResources(), R.drawable.life01)
         life02 = BitmapFactory.decodeResource(getResources(), R.drawable.life02)
 
-        for (i in 4 downTo 0) {
+        for (i in 2 downTo 0) {
             //라이프 이미지 크기 설정, 비트맵 배열에 라이프 이미지 추가
             lifeArray01[i] = Bitmap.createScaledBitmap(life01, scrw / 32 * 3, scrh / 16 * 3, true)
             lifeArray02[i] = Bitmap.createScaledBitmap(life02, scrw / 32 * 3, scrh / 16 * 3, true)
@@ -430,12 +442,12 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
             canvas.drawBitmap(lifeArray02[i]!!, (i * life02.width).toFloat(), 0f, null)
 
             //플레이어 이미지의 좌표가 적 이미지의 좌표 범위 안에 들어가면 플레이어와 적이 충돌한 것으로 간주
-            //***스크린 상에서 플레이어와 적이 같은 위치지만 좌표값이 다르게 나와서
-            //***(적과 플레이어가 모두 좌측 상단에 위치할 때, 적의 좌표값이 (0,0)이면 플레이어는 (-960,-467.5625)로 나왔음)
-            //***차이나는 좌표값만큼 직접 플레이어의 좌표값에 더해 비교함
+            //스크린 상에서 플레이어와 적이 같은 위치지만 좌표값이 다르게 나와서
+            //(적과 플레이어가 모두 좌측 상단에 위치할 때, 적의 좌표값이 (0,0)이면 플레이어는 (-960,-467.5625)로 나왔음)
+            //차이나는 좌표값만큼 직접 플레이어의 좌표값에 더해 비교함
             //-----------------------------------------------------------------------------------------------------
             //플레이어의 체력이 남아있고 j번째 적과 플레이어가 충돌했다면
-            for (j in 0..2) {
+            for (j in 0..4) {
                 if (
                     hp > 0
                     && xd + 960 <= scrw / 2 + (scrw - scrw % 64) / 8 + exd[j]
@@ -443,6 +455,9 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                     && yd + 467.5625 >= scrh / 2 + eyd[j]
                     && yd + 467.5625 <= scrh / 2 + (scrh - scrh % 32) / 4 + eyd[j]
                 ) {
+                    //i번쨰 적 비활성화
+                    EN[j] = 0
+
                     //플레이어 체력 1 감소
                     hp -= 1
 
@@ -455,10 +470,10 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
             //미사일과 적이 충돌했을 땐 충돌 직후 미사일의 이미지를 비활성화하기 때문에 충돌한 순간만 실행되는 것 같음
         }
 
-        //점수 텍스트
+        /*//점수 텍스트
         paint.textSize = scrw / 24f
         paint.textAlign = Paint.Align.RIGHT
-        canvas.drawText("score : $score", (scrw - scrw / 64).toFloat(), scrh / 10f, paint)
+        canvas.drawText("score : $score", (scrw - scrw / 64).toFloat(), scrh / 10f, paint)*/
     }
 
     //터치이벤트 처리
@@ -643,7 +658,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                         if (count > 0 && count < 8) count += 1
                     }
 
-                    for (i in 0..2) {
+                    for (i in 0..4) {
                         //i번째 count2가 8이라면
                         if (count2[i] == 8) {
                             //i번째 count2는 0
@@ -850,7 +865,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                         }
                     }
 
-                    for (i in 0..2) {
+                    for (i in 0..4) {
                         //적의 생명이 0보다 크다면
                         if (eLife[i] > 0) {
                             //카운트 수를 1씩 증가시킨다.

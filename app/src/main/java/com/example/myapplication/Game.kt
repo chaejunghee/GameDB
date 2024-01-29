@@ -1,6 +1,5 @@
 package com.example.myapplication
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -158,7 +157,6 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     }
 
     //캔버스 위에 그리기
-    @SuppressLint("SuspiciousIndentation")
     protected override fun onDraw(canvas: Canvas) {
 
         /*//테이블 내에 있는 DB 삭제
@@ -860,8 +858,8 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                         }
                     }
 
-                    //0.07초 지연한다.
-                    sleep(70)
+                    //0.05초 지연한다.
+                    sleep(50)
 
                 } catch (e: Exception) {
                 }

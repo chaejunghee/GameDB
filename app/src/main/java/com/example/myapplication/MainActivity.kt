@@ -30,7 +30,7 @@ class MainActivity : AppCompatActivity() {
                 secTextView.text = "$sec"
             }
 
-            if (sec == 30) {
+            if (sec == 29) {
                 gameover()
             }
         }

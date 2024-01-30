@@ -7,8 +7,6 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.media.MediaPlayer
 import android.media.SoundPool
-import android.os.Handler
-import android.os.Looper
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -70,10 +68,11 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     var count = 0       //플레이어의 이동을 위한 카운트 수를 저장할 변수
     var n = 0           //플레이어 이미지 전환을 판별하기 위한 변수
     var start = false   //방향키 클릭 유무 (false(=0)(*안 누름)/true(=1)(*누름))
+    var hp = 3          //플레이어 최대 체력
+    var LN = IntArray(3)                //플레이어 라이프 번호
     private var DirButton: String? = null   //플레이어가 정지 상태에 있는 동안 어떤 방향키를 클릭했는지 저장할 문자열 변수
     private var DirButton2: String? = null  //플레이어가 이동하고 있는 상태에서 어떤 방향키를 클릭했는지 저장할 문자열 변수
-    var hp = 3  //플레이어 최대 체력
-    var LN = IntArray(3)    //플레이어 라이프 번호
+
 
     //적 관련 변수   (화면에 적을 5개까지 표시) (적 1~5번의 각 좌표/카운트 수/생명 값/이동 방향을 제어하기 위해 배열형식으로 설정)
     var exd = FloatArray(5)     //적의 x좌표
@@ -93,9 +92,6 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     var missileNum = IntArray(10)   //미사일 번호
     var md = IntArray(10)           //미사일 방향
     var MD = 4                           //미사일 초기 방향 (좌:1 우:2 상:3 하:4)
-
-    //p라는 이름의 페인트 변수 설정
-    var paint: Paint = Paint()
 
     //thread라는 이름의 게임 스레드를 설정
     var thread: GameThread? = null
@@ -238,17 +234,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
         //enemy에 5개까지의 비트맵 정보를 저장함
         val enemy: Array<Bitmap?> = arrayOfNulls<Bitmap>(5)
 
-        //적 수는 5으로 설정
-        EC = 5
-
         for (i in 0..4) {
-            //i번째 적 번호가 0이면(적이 비활성화된 상태라면)
-            if (EN[i] == 0) {
-                //***시간 지연 필요
-                //i번째 적 활성화 후 적 수 +1
-                EN[i] == 1
-                //EC += 1
-            }
             //i번째 적 번호가 1이면(적이 활성화된 상태라면)
             if (EN[i] == 1) {
                 //방향에 따라 적 이미지 파일 설정
@@ -413,18 +399,18 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
         val life01: Array<Bitmap?> = arrayOfNulls<Bitmap>(3)    //검정하트 비트맵 배열
         val life02: Array<Bitmap?> = arrayOfNulls<Bitmap>(3)    //빨간하트 비트맵 배열
 
-        for (i in 2 downTo 0) {
+        for (i in 0..2) {
             //검정하트를 밑에 먼저 그리기
             life01[i] = BitmapFactory.decodeResource(getResources(), R.drawable.life01)
             life01[i] = Bitmap.createScaledBitmap(life01[i]!!, scrw / 32 * 3, scrh / 16 * 3, true)
             canvas.drawBitmap(
                 life01[i]!!,
-                (scrw - ((i + 1) * life01[i]!!.width)).toFloat(),
+                (scrw + ((i - 3) * life01[i]!!.width)).toFloat(),
                 0f,
                 null
             )
 
-            //LN[i]가 1이면 라이프 활성화
+            //LN[i]가 1이면 라이프 활성화상태
             //검정하트 위에 빨간하트 그리기
             if (LN[i] == 1) {
                 life02[i] = BitmapFactory.decodeResource(getResources(), R.drawable.life02)
@@ -432,48 +418,10 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                     Bitmap.createScaledBitmap(life02[i]!!, scrw / 32 * 3, scrh / 16 * 3, true)
                 canvas.drawBitmap(
                     life02[i]!!,
-                    (scrw - ((i + 1) * life02[i]!!.width)).toFloat(),
+                    (scrw + ((i - 3) * life02[i]!!.width)).toFloat(),
                     0f,
                     null
                 )
-            }
-        }
-
-        //플레이어 이미지의 좌표가 적 이미지의 좌표 범위 안에 들어가면 플레이어와 적이 충돌한 것으로 간주
-        //스크린 상에서 플레이어와 적이 같은 위치지만 좌표값이 다르게 나와서
-        //(적과 플레이어가 모두 좌측 상단에 위치할 때, 적의 좌표값이 (0,0)이면 플레이어는 (-960,-467.5625)로 나왔음)
-        //차이나는 좌표값만큼 직접 플레이어의 좌표값에 더해 비교함
-        //-----------------------------------------------------------------------------------------------------
-        //플레이어의 체력이 남아있고 j번째 적과 플레이어가 충돌했다면
-        for (j in 0..4) {
-            if (
-                hp > 0
-                && xd + 960 <= scrw / 2 + (scrw - scrw % 64) / 8 + exd[j]
-                && xd + 960 >= scrw / 2 + exd[j]
-                && yd + 467.5625 >= scrh / 2 + eyd[j]
-                && yd + 467.5625 <= scrh / 2 + (scrh - scrh % 32) / 4 + eyd[j]
-            ) {
-
-                //라이프 비활성화
-                //LN[hp - 1] = 0
-
-                //i번쨰 적 비활성화
-                EN[j] = 0
-
-                //이미지가 겹쳐진 순간만 체력이 깎이는 것이 아니라 겹쳐진 상태동안 체력이 깎여버림
-                //위와 같은 연속 충돌의 문제를 회피하기 위해 플레이어의 체력 감소를 1초 지연시켜 무적상태로 만듦
-                //1초 지연 (1초동안 플레이어가 무적상태가 되어 공격받지 않음)
-                Handler(Looper.getMainLooper()).postDelayed({
-                    //실행할 코드
-                    //플레이어 체력 1 감소
-                    hp -= 1
-
-                    LN[hp] = 0
-
-                }, 1000)
-
-                //플레이어 데미지 효과음 재생
-                soundPool.play(playerDamage, 1.0f, 1.0f, 0, 0, 1.0f)
             }
         }
     }
@@ -876,11 +824,42 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                         }
                     }
 
-                    if (hp == 0) {
-                        Handler(Looper.getMainLooper()).postDelayed({
-                            //실행할 코드
-                            bgBGM.stop()
-                        }, 3000)
+                    //플레이어 이미지의 좌표가 적 이미지의 좌표 범위 안에 들어가면 플레이어와 적이 충돌한 것으로 간주
+                    //스크린 상에서 플레이어와 적이 같은 위치지만 좌표값이 다르게 나와서
+                    //(적과 플레이어가 모두 좌측 상단에 위치할 때, 적의 좌표값이 (0,0)이면 플레이어는 (-960,-467.5625)로 나왔음)
+                    //차이나는 좌표값만큼 직접 플레이어의 좌표값에 더해 비교함
+                    //-----------------------------------------------------------------------------------------------------
+                    //플레이어의 체력이 남아있고, 활성화상태의 i번째 적과 플레이어가 충돌했다면
+                    for (i in 0..4) {
+                        if (EN[i] == 1) {
+                            if (
+                                hp > 0
+                                && xd + 960 <= scrw / 2 + (scrw - scrw % 64) / 8 + exd[i]
+                                && xd + 960 >= scrw / 2 + exd[i]
+                                && yd + 467.5625 >= scrh / 2 + eyd[i]
+                                && yd + 467.5625 <= scrh / 2 + (scrh - scrh % 32) / 4 + eyd[i]
+                            ) {
+                                //i번째 적 비활성화
+                                EN[i] = 0
+                                //플레이어 체력 -1
+                                hp--
+                                //가장 오른쪽의 하트이미지부터 비활성화
+                                LN[hp] = 0
+                                //플레이어 데미지 효과음 재생
+                                soundPool.play(playerDamage, 1.0f, 1.0f, 0, 0, 1.0f)
+                            }
+
+                        }
+                    }
+
+                    //가장 왼쪽의 하트. 즉, 마지막 하트까지 비활성화된 상태라면
+                    if (LN[0] == 0) {
+                        //스레드 중지
+                        thread!!.run = false
+                        //배경음 반납
+                        bgBGM.release()
+                        //여러 효과음 반납
+                        soundPool.release()
                     }
 
                     //0.05초 지연한다.

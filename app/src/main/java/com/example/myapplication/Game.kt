@@ -1,14 +1,13 @@
 package com.example.myapplication
 
+import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.media.MediaPlayer
 import android.media.SoundPool
-import android.os.CountDownTimer
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -72,7 +71,6 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     var start = false   //방향키 클릭 유무 (false(=0)(*안 누름)/true(=1)(*누름))
     private var DirButton: String? = null   //플레이어가 정지 상태에 있는 동안 어떤 방향키를 클릭했는지 저장할 문자열 변수
     private var DirButton2: String? = null  //플레이어가 이동하고 있는 상태에서 어떤 방향키를 클릭했는지 저장할 문자열 변수
-
     var hp = 3  //플레이어 최대 체력
     var LN = IntArray(3)    //플레이어 라이프 번호
 
@@ -98,31 +96,15 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     //p라는 이름의 페인트 변수 설정
     var paint: Paint = Paint()
 
-    //점수
-    var score = 0
-
     //thread라는 이름의 게임 스레드를 설정
-    private var thread: GameThread? = null
+    var thread: GameThread? = null
 
-    //효과음   (배경음, 플레이어 공격, 플레이어 데미지, 적 공격, 적 데미지, 점수)
+    //효과음   (배경음, 미사일 발사, 플레이어 데미지, 적 데미지)
     var bgBGM = MediaPlayer.create(con, R.raw.background_bgm)
     var soundPool = SoundPool.Builder().build()
     val playerAttack = soundPool.load(con, R.raw.player_attack, 1)
     val playerDamage = soundPool.load(con, R.raw.player_damage, 1)
-    val enemyAttack = soundPool.load(con, R.raw.enemy_attack, 1)
     val enemyDamage = soundPool.load(con, R.raw.enemy_damage, 1)
-    val scoreBGM = soundPool.load(con, R.raw.score_bgm, 1)
-
-    /*    val countDown:CountDownTimer= object : CountDownTimer(30000, 1000){
-            override fun onTick(p0: Long) {
-
-            }
-
-            override fun onFinish() {
-                TODO("Not yet implemented")
-            }
-
-        }*/
 
     //초기화 블록
     //생성자 생성 -> Context는 앱에 대한 다양한 정보가 들어 있다. AttributeSet은 xml정보를 가져온다.
@@ -172,9 +154,9 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
         super.onDetachedFromWindow()
     }
 
+
     //캔버스 위에 그리기
     protected override fun onDraw(canvas: Canvas) {
-
         /*//테이블 내에 있는 DB 삭제
         if (count == 0 && DirButton === "Up") {
             val db: SQLiteDatabase = dbHelper.getWritableDatabase()
@@ -299,8 +281,6 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                 else {
                     EN[i] = 0
                     EC -= 1
-                    //score += 10
-                    //soundPool.play(scoreBGM, 1.0f, 1.0f, 0, 0, 1.0f)
                 }
             }
         }
@@ -393,6 +373,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                         //j번째 적의 생명력 1감소
                         eLife[j] -= 1
 
+                        //적 데미지 효과음 재생
                         soundPool.play(enemyDamage, 1.0f, 1.0f, 0, 0, 1.0f)
 
                         //i번째 미사일을 비활성화
@@ -428,8 +409,6 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
             null
         )
 
-
-        //수정부분
         val life01: Array<Bitmap?> = arrayOfNulls<Bitmap>(3)    //검정하트 비트맵 배열
         val life02: Array<Bitmap?> = arrayOfNulls<Bitmap>(3)    //빨간하트 비트맵 배열
 
@@ -437,14 +416,25 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
             //검정하트를 밑에 먼저 그리기
             life01[i] = BitmapFactory.decodeResource(getResources(), R.drawable.life01)
             life01[i] = Bitmap.createScaledBitmap(life01[i]!!, scrw / 32 * 3, scrh / 16 * 3, true)
-            canvas.drawBitmap(life01[i]!!, (i * life01[i]!!.width).toFloat(), 0f, null)
+            canvas.drawBitmap(
+                life01[i]!!,
+                (scrw - ((i + 1) * life01[i]!!.width)).toFloat(),
+                0f,
+                null
+            )
 
             //LN[i]가 1이면 라이프 활성화
             //검정하트 위에 빨간하트 그리기
             if (LN[i] == 1) {
                 life02[i] = BitmapFactory.decodeResource(getResources(), R.drawable.life02)
-                life02[i] = Bitmap.createScaledBitmap(life02[i]!!, scrw / 32 * 3, scrh / 16 * 3, true)
-                canvas.drawBitmap(life02[i]!!, (i * life02[i]!!.width).toFloat(), 0f, null)
+                life02[i] =
+                    Bitmap.createScaledBitmap(life02[i]!!, scrw / 32 * 3, scrh / 16 * 3, true)
+                canvas.drawBitmap(
+                    life02[i]!!,
+                    (scrw - ((i + 1) * life02[i]!!.width)).toFloat(),
+                    0f,
+                    null
+                )
             }
 
             //플레이어 이미지의 좌표가 적 이미지의 좌표 범위 안에 들어가면 플레이어와 적이 충돌한 것으로 간주
@@ -463,20 +453,15 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                 ) {
                     //i번쨰 적 비활성화
                     EN[j] = 0
-
                     //플레이어 체력 1 감소
                     hp -= 1
-
                     //라이프 비활성화
                     LN[i] = 0
+                    //플레이어 데미지 효과음 재생
+                    soundPool.play(playerDamage, 1.0f, 1.0f, 0, 0, 1.0f)
                 }
             }
         }
-
-        /*//점수 텍스트
-        paint.textSize = scrw / 24f
-        paint.textAlign = Paint.Align.RIGHT
-        canvas.drawText("score : $score", (scrw - scrw / 64).toFloat(), scrh / 10f, paint)*/
     }
 
     //터치이벤트 처리
@@ -571,6 +556,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                     }
                 }
 
+                //미사일 발사 효과음 재생
                 soundPool.play(playerAttack, 1.0f, 1.0f, 0, 0, 1.0f)
             }
             //방향키와 공격 버튼이 아닌 곳을 터치한 경우라면
@@ -630,9 +616,9 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                 FeedEntry.COLUMN_NAME_SUBTITLE + " TEXT," +
                 FeedEntry.COLUMN_NAME_SUBTITLE2 + " TEXT)" //텍스트 형식의 보조 타이블 이름
     private const val SQL_DELETE_ENTRIES = "DROP TABLE IF EXISTS " + FeedEntry.TABLE_NAME
-}*/
+    }*/
 
-    internal inner class GameThread : Thread() {
+    inner class GameThread : Thread() {
         //run은 0 또는 1의 값을 가질 수 있으며, true 값을 넣어줌 (true = 1, false = 0)
         var run = true
 

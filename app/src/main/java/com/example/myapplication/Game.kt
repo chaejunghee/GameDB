@@ -1,6 +1,5 @@
 package com.example.myapplication
 
-import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -8,6 +7,8 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.media.MediaPlayer
 import android.media.SoundPool
+import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -246,7 +247,7 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                 //***시간 지연 필요
                 //i번째 적 활성화 후 적 수 +1
                 EN[i] == 1
-                EC += 1
+                //EC += 1
             }
             //i번째 적 번호가 1이면(적이 활성화된 상태라면)
             if (EN[i] == 1) {
@@ -436,30 +437,43 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                     null
                 )
             }
+        }
 
-            //플레이어 이미지의 좌표가 적 이미지의 좌표 범위 안에 들어가면 플레이어와 적이 충돌한 것으로 간주
-            //스크린 상에서 플레이어와 적이 같은 위치지만 좌표값이 다르게 나와서
-            //(적과 플레이어가 모두 좌측 상단에 위치할 때, 적의 좌표값이 (0,0)이면 플레이어는 (-960,-467.5625)로 나왔음)
-            //차이나는 좌표값만큼 직접 플레이어의 좌표값에 더해 비교함
-            //-----------------------------------------------------------------------------------------------------
-            //플레이어의 체력이 남아있고 j번째 적과 플레이어가 충돌했다면
-            for (j in 0..4) {
-                if (
-                    hp > 0
-                    && xd + 960 <= scrw / 2 + (scrw - scrw % 64) / 8 + exd[j]
-                    && xd + 960 >= scrw / 2 + exd[j]
-                    && yd + 467.5625 >= scrh / 2 + eyd[j]
-                    && yd + 467.5625 <= scrh / 2 + (scrh - scrh % 32) / 4 + eyd[j]
-                ) {
-                    //i번쨰 적 비활성화
-                    EN[j] = 0
+        //플레이어 이미지의 좌표가 적 이미지의 좌표 범위 안에 들어가면 플레이어와 적이 충돌한 것으로 간주
+        //스크린 상에서 플레이어와 적이 같은 위치지만 좌표값이 다르게 나와서
+        //(적과 플레이어가 모두 좌측 상단에 위치할 때, 적의 좌표값이 (0,0)이면 플레이어는 (-960,-467.5625)로 나왔음)
+        //차이나는 좌표값만큼 직접 플레이어의 좌표값에 더해 비교함
+        //-----------------------------------------------------------------------------------------------------
+        //플레이어의 체력이 남아있고 j번째 적과 플레이어가 충돌했다면
+        for (j in 0..4) {
+            if (
+                hp > 0
+                && xd + 960 <= scrw / 2 + (scrw - scrw % 64) / 8 + exd[j]
+                && xd + 960 >= scrw / 2 + exd[j]
+                && yd + 467.5625 >= scrh / 2 + eyd[j]
+                && yd + 467.5625 <= scrh / 2 + (scrh - scrh % 32) / 4 + eyd[j]
+            ) {
+
+                //라이프 비활성화
+                //LN[hp - 1] = 0
+
+                //i번쨰 적 비활성화
+                EN[j] = 0
+
+                //이미지가 겹쳐진 순간만 체력이 깎이는 것이 아니라 겹쳐진 상태동안 체력이 깎여버림
+                //위와 같은 연속 충돌의 문제를 회피하기 위해 플레이어의 체력 감소를 1초 지연시켜 무적상태로 만듦
+                //1초 지연 (1초동안 플레이어가 무적상태가 되어 공격받지 않음)
+                Handler(Looper.getMainLooper()).postDelayed({
+                    //실행할 코드
                     //플레이어 체력 1 감소
                     hp -= 1
-                    //라이프 비활성화
-                    LN[i] = 0
-                    //플레이어 데미지 효과음 재생
-                    soundPool.play(playerDamage, 1.0f, 1.0f, 0, 0, 1.0f)
-                }
+
+                    LN[hp] = 0
+
+                }, 1000)
+
+                //플레이어 데미지 효과음 재생
+                soundPool.play(playerDamage, 1.0f, 1.0f, 0, 0, 1.0f)
             }
         }
     }
@@ -860,6 +874,13 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                             //카운트 수를 1씩 증가시킨다.
                             count2[i] += 1
                         }
+                    }
+
+                    if (hp == 0) {
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            //실행할 코드
+                            bgBGM.stop()
+                        }, 3000)
                     }
 
                     //0.05초 지연한다.

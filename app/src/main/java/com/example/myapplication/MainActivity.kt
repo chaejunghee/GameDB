@@ -1,7 +1,6 @@
 package com.example.myapplication
 
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -17,7 +16,6 @@ class MainActivity : AppCompatActivity() {
     lateinit var secTextView: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        //requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -31,6 +29,15 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 secTextView.text = "$sec"
             }
+
+            if (sec == 30) {
+                gameover()
+            }
         }
+    }
+
+    fun gameover() {
+        var intent = Intent(this, GameoverActivity::class.java)
+        startActivity(intent)
     }
 }

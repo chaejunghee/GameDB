@@ -13,6 +13,7 @@ class MainActivity : AppCompatActivity() {
     var timerTask: Timer? = null
     var sec = 0
 
+    //초 텍스트
     lateinit var secTextView: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,12 +31,14 @@ class MainActivity : AppCompatActivity() {
                 secTextView.text = "$sec"
             }
 
+            //30하면 스크린에 31까지 나오고 화면전환이 돼서 29로 설정함
             if (sec == 29) {
                 gameover()
             }
         }
     }
 
+    //화면 전환 메소드
     fun gameover() {
         var intent = Intent(this, GameoverActivity::class.java)
         startActivity(intent)

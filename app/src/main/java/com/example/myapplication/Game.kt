@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
-import android.graphics.Paint
 import android.media.MediaPlayer
 import android.media.SoundPool
 import android.util.AttributeSet
@@ -13,7 +12,7 @@ import android.view.View
 import kotlin.random.Random
 
 //공용 클래스 Game의 뷰 확장
-open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
+class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     /*    *//* 테이블 내용을 정의한다. *//*
     object FeedEntry : BaseColumns {
         const val TABLE_NAME = "entry"
@@ -841,6 +840,8 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                             ) {
                                 //i번째 적 비활성화
                                 EN[i] = 0
+                                //적 수 -1
+                                EC--
                                 //플레이어 체력 -1
                                 hp--
                                 //가장 오른쪽의 하트이미지부터 비활성화
@@ -853,7 +854,8 @@ open class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                     }
 
                     //가장 왼쪽의 하트. 즉, 마지막 하트까지 비활성화된 상태라면
-                    if (LN[0] == 0) {
+                    //또는 모든 적을 처치했다면
+                    if (LN[0] == 0 || EC == 0) {
                         //스레드 중지
                         thread!!.run = false
                         //배경음 반납

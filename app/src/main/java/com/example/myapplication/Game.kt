@@ -1,8 +1,7 @@
 package com.example.myapplication
 
-import android.app.AlertDialog
+import android.app.Activity
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -14,13 +13,10 @@ import android.os.Looper
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import android.widget.Button
-import android.widget.Toast
 import kotlin.random.Random
 
 //공용 클래스 Game의 뷰 확장
 class Game(context: Context?, attr: AttributeSet?) : View(context, attr) {
-
     /*    *//* 테이블 내용을 정의한다. *//*
     object FeedEntry : BaseColumns {
         const val TABLE_NAME = "entry"
@@ -109,7 +105,8 @@ class Game(context: Context?, attr: AttributeSet?) : View(context, attr) {
     val playerAttack = soundPool.load(context, R.raw.player_attack, 1)
     val playerDamage = soundPool.load(context, R.raw.player_damage, 1)
     val enemyDamage = soundPool.load(context, R.raw.enemy_damage, 1)
-    var gameoverBGM = MediaPlayer.create(context, R.raw.gameover_bgm)
+    var gameoverSound = MediaPlayer.create(context, R.raw.gameover_sound)
+    var gameClearSound = MediaPlayer.create(context, R.raw.gameclear_sound)
 
     //초기화 블록
     //생성자 생성 -> Context는 앱에 대한 다양한 정보가 들어 있다. AttributeSet은 xml정보를 가져온다.
@@ -158,7 +155,6 @@ class Game(context: Context?, attr: AttributeSet?) : View(context, attr) {
         //부모 클래스의 멤버 변수를 참조
         super.onDetachedFromWindow()
     }
-
 
     //캔버스 위에 그리기
     protected override fun onDraw(canvas: Canvas) {
@@ -237,7 +233,6 @@ class Game(context: Context?, attr: AttributeSet?) : View(context, attr) {
         player = Bitmap.createScaledBitmap(player, scrw / 8, scrh / 4, true)
         //캔버스에 플레이어 그리기
         canvas.drawBitmap(player, (scrw / 2f) + xd, (scrh / 2f) + yd, null)
-
 
         //enemy에 5개까지의 비트맵 정보를 저장함
         val enemy: Array<Bitmap?> = arrayOfNulls<Bitmap>(5)
@@ -577,7 +572,6 @@ class Game(context: Context?, attr: AttributeSet?) : View(context, attr) {
         return true
     }
 
-
     /*    companion object {
     private const val SQL_CREATE_ENTRIES =
         "CREATE TABLE " + FeedEntry.TABLE_NAME + " (" +  //테이블 이름
@@ -858,29 +852,16 @@ class Game(context: Context?, attr: AttributeSet?) : View(context, attr) {
                                 //플레이어 데미지 효과음 재생
                                 soundPool.play(playerDamage, 1.0f, 1.0f, 0, 0, 1.0f)
                             }
-
                         }
                     }
 
-                    //가장 왼쪽의 하트. 즉, 마지막 하트까지 비활성화된 상태라면
-                    if (LN[0] == 0 || EC == 0) {
-                        //스레드 중지
-                        thread!!.run = false
-                        //배경음 반납
-                        bgBGM.release()
-                        //여러 효과음 반납
-                        soundPool.release()
-
-                        //0.5초 후 게임오버화면으로 전환
-                        Handler(Looper.getMainLooper()).postDelayed({
-                            val intent = Intent(context, GameoverActivity::class.java)
-                            intent.flags =
-                                Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                            context.startActivity(intent)
-
-                            //게임오버 효과음 재생
-                            gameoverBGM.start()
-                        }, 500)
+                    //가장 왼쪽의 하트. 즉, 마지막 하트까지 비활성화된 상태라면 게임오버
+                    if (LN[0] == 0) {
+                        gameOver()
+                    }
+                    //하트가 남아있고, 모든 적을 처치했다면 게임 클리어
+                    if (LN[0] != 0 && EC == 0) {
+                        gameClear()
                     }
 
                     //0.05초 지연한다.
@@ -889,6 +870,104 @@ class Game(context: Context?, attr: AttributeSet?) : View(context, attr) {
                 } catch (e: Exception) {
                 }
             }
+        }
+    }
+
+    //30초를 센 후, MainActivity 안에서 호출됨
+    fun timeOut() {
+        //스레드 중지
+        thread!!.run = false
+        //배경음 반납
+        bgBGM.release()
+        //여러 효과음 반납
+        soundPool.release()
+
+        //0.5초 후 게임오버화면으로 전환
+        Handler(Looper.getMainLooper()).postDelayed({
+            val intent = Intent(context, GameoverActivity::class.java)
+            intent.flags =
+                Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            context.startActivity(intent)
+
+            //게임오버 효과음 재생
+            gameoverSound.start()
+
+            //액티비티 종료
+            (context as? Activity)?.finish()
+
+        }, 500)
+
+        //2초 후 게임오버 효과음 반납
+        Handler(Looper.getMainLooper()).postDelayed({
+            gameoverSound.release()
+        }, 2000)
+    }
+
+    fun gameOver() {
+        //게임오버
+        //가장 왼쪽의 하트. 즉, 마지막 하트까지 비활성화된 상태라면
+        if (LN[0] == 0) {
+            //스레드 중지
+            thread!!.run = false
+            //배경음 반납
+            bgBGM.release()
+            //여러 효과음 반납
+            soundPool.release()
+
+            //0.5초 후 게임오버화면으로 전환
+            Handler(Looper.getMainLooper()).postDelayed({
+                val intent = Intent(context, GameoverActivity::class.java)
+                intent.flags =
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                context.startActivity(intent)
+
+                //게임오버 효과음 재생
+                gameoverSound.start()
+
+                //액티비티 종료
+                (context as? Activity)?.finish()
+
+            }, 500)
+
+            //2초 후 게임오버 효과음 반납
+            Handler(Looper.getMainLooper()).postDelayed({
+                gameoverSound.release()
+            }, 2000)
+        }
+    }
+
+    fun gameClear() {
+        //모든 적을 처치했다면
+        //하트가 하나라도 남아있는 경우라면 게임 클리어
+        if (EC == 0) {
+            //스레드 중지
+            thread!!.run = false
+            //배경음 반납
+            bgBGM.release()
+            //여러 효과음 반납
+            soundPool.release()
+
+            //0.5초 후 게임오버화면으로 전환
+            Handler(Looper.getMainLooper()).postDelayed({
+                val intent = Intent(context, GameoverActivity::class.java)
+                intent.flags =
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                context.startActivity(intent)
+
+                //효과음 소리가 너무 커서 볼륨을 조절함
+                gameClearSound.setVolume(0.25f, 0.25f)
+                //게임 클리어 효과음 재생
+                gameClearSound.start()
+
+                //액티비티 종료
+                (context as? Activity)?.finish()
+
+            }, 500)
+
+            //5초 후 게임 클리어 효과음 반납
+            Handler(Looper.getMainLooper()).postDelayed({
+                gameClearSound.release()
+            }, 5000)
         }
     }
 }

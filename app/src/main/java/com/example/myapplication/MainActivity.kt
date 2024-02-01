@@ -1,10 +1,9 @@
 package com.example.myapplication
 
-import android.content.Intent
-import android.media.MediaPlayer
 import android.os.Bundle
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import java.util.Timer
 import kotlin.concurrent.timer
 
@@ -17,11 +16,17 @@ class MainActivity : AppCompatActivity() {
     //초 텍스트
     lateinit var secTextView: TextView
 
+    //Game 클래스 안의 timeOut() 메소드를 사용하기 위함
+    lateinit var game: Game
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        //status bar 검정색으로 변경
+        window.statusBarColor = ContextCompat.getColor(this, R.color.black)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         secTextView = findViewById(R.id.secTextView)
+        game = findViewById(R.id.gameView)
 
         timerTask = timer(period = 10) {
             time++
@@ -32,16 +37,17 @@ class MainActivity : AppCompatActivity() {
                 secTextView.text = "$sec"
             }
 
-            //30하면 스크린에 31까지 나오고 화면전환이 돼서 29로 설정함
-            if (sec == 29) {
-                gameover()
+            //30초까지만 카운트
+            if (sec == 30) {
+                //Game의 timeOut()를 메소드 호출하여 배경음과 여러 효과음을 반납한 뒤, 게임오버 효과음을 재생함
+                game.timeOut()
             }
         }
     }
 
-    //화면 전환 메소드
-    fun gameover() {
-        var intent = Intent(this, GameoverActivity::class.java)
-        startActivity(intent)
+    //액티비티 종료 시 타이머 종료
+    override fun onDestroy() {
+        timerTask?.cancel()
+        super.onDestroy()
     }
 }

@@ -1,20 +1,41 @@
 package com.example.myapplication
 
 import android.animation.ObjectAnimator
+import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.MotionEvent
+import android.view.Window
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 
+class CustomDialog(context: Context) : Dialog(context) {
+    //커스텀 다이얼로그 생성
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        requestWindowFeature(Window.FEATURE_NO_TITLE)
+        setContentView(R.layout.custom_dialog)
+
+        //팝업창 "닫기" 버튼 연동
+        val btnCloseDialog: Button = findViewById(R.id.btn_close_popup)
+        //custom_dialog.xml의 "닫기" 버튼을 누르면 팝업창 닫힘
+        btnCloseDialog.setOnClickListener {
+            dismiss()
+        }
+    }
+}
+
 class StartActivity : AppCompatActivity() {
     lateinit var startView: ImageView       //시작화면 이미지
     lateinit var startViewBGM: MediaPlayer  //시작화면 배경음
     lateinit var startSound: MediaPlayer    //시작 효과음
-    lateinit var startText: TextView         //시작화면 텍스트 ("화면을 터치하면 시작합니다")
+    lateinit var startText: TextView        //시작화면 텍스트 ("화면을 터치하면 시작합니다")
+    lateinit var btnPopUP: Button           //"게임 설명" 버튼
 
     override fun onCreate(savedInstanceState: Bundle?) {
         //status bar 검정색으로 변경
@@ -24,6 +45,13 @@ class StartActivity : AppCompatActivity() {
 
         startView = findViewById(R.id.startView)
         startText = findViewById(R.id.startText)
+        btnPopUP = findViewById(R.id.btn_popup)
+
+        //게임설명버튼 클릭 시 커스텀 다이얼로그로 구현한 팝업창이 뜸
+        btnPopUP.setOnClickListener {
+            val customDialog = CustomDialog(this)
+            customDialog.show()
+        }
 
         //시작화면 배경음과 시작 효과음 설정
         startViewBGM = MediaPlayer.create(this, R.raw.startview_bgm)

@@ -1,18 +1,26 @@
 package com.example.myapplication
 
+import android.app.AlertDialog
 import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.media.MediaPlayer
 import android.media.SoundPool
+import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Button
+import android.widget.Toast
 import kotlin.random.Random
 
 //공용 클래스 Game의 뷰 확장
-class Game(con: Context?, at: AttributeSet?) : View(con, at) {
+class Game(context: Context?, attr: AttributeSet?) : View(context, attr) {
+
     /*    *//* 테이블 내용을 정의한다. *//*
     object FeedEntry : BaseColumns {
         const val TABLE_NAME = "entry"
@@ -95,12 +103,13 @@ class Game(con: Context?, at: AttributeSet?) : View(con, at) {
     //thread라는 이름의 게임 스레드를 설정
     var thread: GameThread? = null
 
-    //효과음   (배경음, 미사일 발사, 플레이어 데미지, 적 데미지)
-    var bgBGM = MediaPlayer.create(con, R.raw.background_bgm)
+    //효과음   (배경음, 미사일 발사, 플레이어 데미지, 적 데미지, 게임오버)
+    var bgBGM = MediaPlayer.create(context, R.raw.background_bgm)
     var soundPool = SoundPool.Builder().build()
-    val playerAttack = soundPool.load(con, R.raw.player_attack, 1)
-    val playerDamage = soundPool.load(con, R.raw.player_damage, 1)
-    val enemyDamage = soundPool.load(con, R.raw.enemy_damage, 1)
+    val playerAttack = soundPool.load(context, R.raw.player_attack, 1)
+    val playerDamage = soundPool.load(context, R.raw.player_damage, 1)
+    val enemyDamage = soundPool.load(context, R.raw.enemy_damage, 1)
+    var gameoverBGM = MediaPlayer.create(context, R.raw.gameover_bgm)
 
     //초기화 블록
     //생성자 생성 -> Context는 앱에 대한 다양한 정보가 들어 있다. AttributeSet은 xml정보를 가져온다.
@@ -854,7 +863,6 @@ class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                     }
 
                     //가장 왼쪽의 하트. 즉, 마지막 하트까지 비활성화된 상태라면
-                    //또는 모든 적을 처치했다면
                     if (LN[0] == 0 || EC == 0) {
                         //스레드 중지
                         thread!!.run = false
@@ -862,6 +870,17 @@ class Game(con: Context?, at: AttributeSet?) : View(con, at) {
                         bgBGM.release()
                         //여러 효과음 반납
                         soundPool.release()
+
+                        //0.5초 후 게임오버화면으로 전환
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            val intent = Intent(context, GameoverActivity::class.java)
+                            intent.flags =
+                                Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                            context.startActivity(intent)
+
+                            //게임오버 효과음 재생
+                            gameoverBGM.start()
+                        }, 500)
                     }
 
                     //0.05초 지연한다.

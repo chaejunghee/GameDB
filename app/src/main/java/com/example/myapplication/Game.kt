@@ -99,7 +99,7 @@ class Game(context: Context?, attr: AttributeSet?) : View(context, attr) {
     //thread라는 이름의 게임 스레드를 설정
     var thread: GameThread? = null
 
-    //효과음   (배경음, 미사일 발사, 플레이어 데미지, 적 데미지, 게임오버)
+    //효과음   (배경음, 미사일 발사, 플레이어 데미지, 적 데미지, 게임오버, 게임 클리어)
     var bgBGM = MediaPlayer.create(context, R.raw.background_bgm)
     var soundPool = SoundPool.Builder().build()
     val playerAttack = soundPool.load(context, R.raw.player_attack, 1)

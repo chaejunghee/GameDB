@@ -15,16 +15,22 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 
 class CustomDialog(context: Context) : Dialog(context) {
+    lateinit var popUpSound: MediaPlayer    //팝업창 효과음
+
     //커스텀 다이얼로그 생성
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         setContentView(R.layout.custom_dialog)
 
+        //팝업창 효과음 설정
+        popUpSound = MediaPlayer.create(context, R.raw.popup_sound)
+
         //팝업창 "닫기" 버튼 연동
         val btnCloseDialog: Button = findViewById(R.id.btn_close_popup)
-        //custom_dialog.xml의 "닫기" 버튼을 누르면 팝업창 닫힘
+        //custom_dialog.xml의 "닫기" 버튼을 누르면 팝업창 효과음이 재생되며 닫힘
         btnCloseDialog.setOnClickListener {
+            popUpSound.start()
             dismiss()
         }
     }
@@ -36,6 +42,7 @@ class StartActivity : AppCompatActivity() {
     lateinit var startSound: MediaPlayer    //시작 효과음
     lateinit var startText: TextView        //시작화면 텍스트 ("화면을 터치하면 시작합니다")
     lateinit var btnPopUP: Button           //"게임 설명" 버튼
+    lateinit var popUpSound: MediaPlayer    //팝업창 효과음
 
     override fun onCreate(savedInstanceState: Bundle?) {
         //status bar 검정색으로 변경
@@ -47,15 +54,17 @@ class StartActivity : AppCompatActivity() {
         startText = findViewById(R.id.startText)
         btnPopUP = findViewById(R.id.btn_popup)
 
-        //게임설명버튼 클릭 시 커스텀 다이얼로그로 구현한 팝업창이 뜸
+        //시작화면 배경음, 시작 효과음, 팝업창 효과음 설정
+        startViewBGM = MediaPlayer.create(this, R.raw.startview_bgm)
+        startSound = MediaPlayer.create(this, R.raw.start_sound)
+        popUpSound = MediaPlayer.create(this, R.raw.popup_sound)
+
+        //게임설명버튼 클릭 시 팝업창 효과음이 재생되며 커스텀 다이얼로그로 구현한 팝업창이 뜸
         btnPopUP.setOnClickListener {
+            popUpSound.start()
             val customDialog = CustomDialog(this)
             customDialog.show()
         }
-
-        //시작화면 배경음과 시작 효과음 설정
-        startViewBGM = MediaPlayer.create(this, R.raw.startview_bgm)
-        startSound = MediaPlayer.create(this, R.raw.start_sound)
 
         //시작화면 배경음 무한루프로 재생
         startViewBGM.start()
@@ -90,10 +99,11 @@ class StartActivity : AppCompatActivity() {
         }
     }
 
-    //액티비티 종료 시 시작 배경음 반납, 시작 효과음 반납
+    //액티비티 종료 시 시작 배경음 반납, 시작 효과음, 팝업창 효과음 반납
     override fun onDestroy() {
         startViewBGM.release()
         startSound.release()
+        popUpSound.release()
         super.onDestroy()
     }
 }

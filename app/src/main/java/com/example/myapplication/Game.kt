@@ -17,45 +17,6 @@ import kotlin.random.Random
 
 //공용 클래스 Game의 뷰 확장
 class Game(context: Context?, attr: AttributeSet?) : View(context, attr) {
-    /*    *//* 테이블 내용을 정의한다. *//*
-    object FeedEntry : BaseColumns {
-        const val TABLE_NAME = "entry"
-        const val _ID = "_id"
-        const val COLUMN_NAME_TITLE = "title"
-        const val COLUMN_NAME_SUBTITLE = "subtitle"
-        const val COLUMN_NAME_SUBTITLE2 = "subtitle2"
-    }
-
-    inner class FeedReaderDbHelper(context: Context?) :
-        SQLiteOpenHelper(context, Companion.DATABASE_NAME, null, Companion.DATABASE_VERSION) {
-        override fun onCreate(db: SQLiteDatabase) {
-            db.execSQL(Game1.Companion.SQL_CREATE_ENTRIES)
-        }
-
-        override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-            // This database is only a cache for online data, so its upgrade policy is
-            // to simply to discard the data and start over
-            db.execSQL(Game1.Companion.SQL_DELETE_ENTRIES)
-            onCreate(db)
-        }
-
-        override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-            onUpgrade(db, oldVersion, newVersion)
-        }
-
-        companion object {
-            // If you change the database schema, you must increment the database version.
-            const val DATABASE_VERSION = 1 //DB 버전
-            const val DATABASE_NAME = "FeedReader.db" //DB 이름
-        }
-    }
-
-    var dbHelper = FeedReaderDbHelper(getContext())*/
-
-    //DB저장
-    var save = 0
-    var savecount = 1
-
     //이미지 파일 (플레이어, 방향키, 공격 버튼, 적, 생명)
     lateinit var player: Bitmap
     lateinit var moveButton: Bitmap
@@ -75,7 +36,6 @@ class Game(context: Context?, attr: AttributeSet?) : View(context, attr) {
     var LN = IntArray(3)                //플레이어 라이프 번호
     private var DirButton: String? = null   //플레이어가 정지 상태에 있는 동안 어떤 방향키를 클릭했는지 저장할 문자열 변수
     private var DirButton2: String? = null  //플레이어가 이동하고 있는 상태에서 어떤 방향키를 클릭했는지 저장할 문자열 변수
-
 
     //적 관련 변수   (화면에 적을 5개까지 표시) (적 1~5번의 각 좌표/카운트 수/생명 값/이동 방향을 제어하기 위해 배열형식으로 설정)
     var exd = FloatArray(5)     //적의 x좌표
@@ -158,53 +118,6 @@ class Game(context: Context?, attr: AttributeSet?) : View(context, attr) {
 
     //캔버스 위에 그리기
     protected override fun onDraw(canvas: Canvas) {
-        /*//테이블 내에 있는 DB 삭제
-        if (count == 0 && DirButton === "Up") {
-            val db: SQLiteDatabase = dbHelper.getWritableDatabase()
-            db.execSQL("DELETE FROM entry")
-            savecount = 1
-        }
-
-        //테이블 title과 subtitle에 저장할 내용
-        val title = "" + savecount
-        val subtitle = "5678$savecount"
-        val subtitle2 = "서브2 :$savecount"
-
-        //DB 저장
-        if (count == 0 && DirButton === "Left" && save == 0) {
-            // Gets the data repository in write mode
-            val db: SQLiteDatabase = dbHelper.getWritableDatabase()
-
-            // Create a new map of values, where column names are the keys
-            val values = ContentValues()
-            values.put(FeedEntry.COLUMN_NAME_TITLE, title)
-            values.put(FeedEntry.COLUMN_NAME_SUBTITLE, subtitle)
-            values.put(FeedEntry.COLUMN_NAME_SUBTITLE2, subtitle2)
-
-            // Insert the new row, returning the primary key value of the new row
-            val newRowId: Long = db.insert(FeedEntry.TABLE_NAME, null, values)
-            save = 1
-            savecount += 1
-            db.close()
-        }
-        if (count == 0 && DirButton === "Down") {
-            save = 0
-        }
-
-        //DB 읽기
-        if (count == 0 && DirButton === "Right") {
-            val db: SQLiteDatabase = dbHelper.getReadableDatabase()
-            val a = "1"
-            val cursor1: Cursor = db.rawQuery("SELECT * FROM entry WHERE _id =$a", null)
-            if (cursor1.moveToFirst()) {
-                val Title: String = cursor1.getString(2)
-                p.setTextSize(scrh / 16f)
-                canvas.drawText("" + Title, 0f, 400f, p)
-            }
-            cursor1.close()
-            db.close()
-        }*/
-
         //플레이어 이미지 파일 설정
         when (n) {
             //게임시작 시
@@ -571,16 +484,6 @@ class Game(context: Context?, attr: AttributeSet?) : View(context, attr) {
 
         return true
     }
-
-    /*    companion object {
-    private const val SQL_CREATE_ENTRIES =
-        "CREATE TABLE " + FeedEntry.TABLE_NAME + " (" +  //테이블 이름
-                FeedEntry._ID + " INTEGER PRIMARY KEY," +  //고유 번호 키 부여한 ID값
-                FeedEntry.COLUMN_NAME_TITLE + " TEXT," +  //텍스트 형식의 타이틀 이름
-                FeedEntry.COLUMN_NAME_SUBTITLE + " TEXT," +
-                FeedEntry.COLUMN_NAME_SUBTITLE2 + " TEXT)" //텍스트 형식의 보조 타이블 이름
-    private const val SQL_DELETE_ENTRIES = "DROP TABLE IF EXISTS " + FeedEntry.TABLE_NAME
-    }*/
 
     inner class GameThread : Thread() {
         //run은 0 또는 1의 값을 가질 수 있으며, true 값을 넣어줌 (true = 1, false = 0)
